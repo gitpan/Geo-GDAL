@@ -1,0 +1,102 @@
+CPLErr						T_IV
+GDALAccess					T_IV
+GDALColorEntry					T_OPAQUE_STRUCT
+GDALColorEntry *				T_PTROBJ
+GDALColorInterp					T_IV
+GDALColorTableH					T_PTROBJ_SPECIAL
+GDALDataType					T_IV
+GDALDatasetH					T_PTROBJ_SPECIAL
+GDALDatasetH ***				T_PTROBJ
+GDALDriverH					T_PTROBJ_SPECIAL
+GDALMajorObjectH				T_PTROBJ
+GDALOptionDefinition				T_OPAQUE_STRUCT
+GDALOptionDefinition *				T_PTROBJ
+GDALPaletteInterp				T_IV
+GDALProgressFunc				T_PTROBJ
+GDALRPCInfo					T_OPAQUE_STRUCT
+GDALRPCInfo *					T_PTROBJ
+GDALRWFlag					T_IV
+GDALRasterBandH					T_PTROBJ_SPECIAL
+GDALRasterBandH *				T_PTROBJ
+GDAL_GCP					T_OPAQUE_STRUCT
+GDAL_GCP *					T_PTROBJ
+GDAL_GCP **					T_PTROBJ
+const GDALColorEntry *				T_PTROBJ
+const GDAL_GCP *				T_PTROBJ
+double *					T_GEOTRANSFORM
+GDALAffine					T_GEOTRANSFORM
+float *						T_PTROBJ
+int *		  				T_PTROBJ
+char **						T_CHARPTRPTR
+#############################################################################
+INPUT
+T_OPAQUE_STRUCT
+	if (sv_derived_from($arg, \"${ntype}\")) {
+	    STRLEN len;
+	    char  *s = SvPV((SV*)SvRV($arg), len);
+
+	    if (len != sizeof($var))
+		croak(\"Size %d of packed data != expected %d\",
+			len, sizeof($var));
+	    $var = *($type *)s;
+	}
+	else
+	    croak(\"$var is not of type ${ntype}\")
+T_PTROBJ_SPECIAL
+   if (sv_derived_from($arg, \"${(my $ntt=$ntype)=~s/^GDAL_?/Geo::GDAL::/g;$ntt=~s/H$//;\$ntt}\")) {
+       IV tmp = SvIV((SV*)SvRV($arg));
+       $var = ($type) tmp;
+   }
+   else
+       croak(\"$var is not of type ${(my $ntt=$ntype)=~s/^GDAL_?/Geo::GDAL::/;$ntt=~s/H$//;\$ntt}\");
+T_GEOTRANSFORM
+    if (sv_derived_from($arg, \"ARRAY\")) {
+	$var = (double *) SvPVX(sv_2mortal(newSV(sizeof(double) * 6)));
+	I32 tmp_i;
+	for (tmp_i = 0; tmp_i < 6; tmp_i++) {
+	    SV **tmp_sv = av_fetch((AV *)SvRV($arg), tmp_i, 0);
+	    $var\[tmp_i] = SvNV(*tmp_sv);
+	}
+    } 
+    else
+	croak(\"$var is not an array ref\");
+T_CHARPTRPTR
+    if (sv_derived_from($arg, \"ARRAY\")) {
+	AV *tmp = (AV *)SvRV($arg);
+	I32 tmp_i, tmp_n = av_len(tmp) + 1;
+	$var = (char **) SvPVX(sv_2mortal(newSV(sizeof(char *) * tmp_n)));
+	for (tmp_i = 0; tmp_i < tmp_n - 1; tmp_i++) {
+	    SV **tmp_sv = av_fetch((AV *)SvRV($arg), tmp_i, 0);
+	    $var\[tmp_i] = SvPVX(*tmp_sv);
+	}
+	$var\[tmp_i] = NULL;
+    } else
+	croak(\"$var is not an array ref\");
+
+#############################################################################
+OUTPUT
+T_OPAQUE_STRUCT
+	sv_setref_pvn($arg, \"${ntype}\", (char *)&$var, sizeof($var));
+T_PTROBJ_SPECIAL
+       sv_setref_pv($arg, 
+	\"${(my $ntt=$ntype)=~s/^GDAL_?/Geo::GDAL::/;$ntt=~s/H$//;\$ntt}\",
+       (void*)$var);
+T_GEOTRANSFORM
+    {
+	I32 tmp_i;
+	AV *tmp_list = (AV *)sv_2mortal((SV *)newAV());
+	for (tmp_i = 0; tmp_i < 6; tmp_i++)
+	    av_push(tmp_list, newSVnv($var\[tmp_i]));
+	$arg = newRV((SV *) tmp_list);
+    }
+T_CHARPTRPTR
+    if ($var) {
+	I32 tmp_i;
+	AV *tmp_list = (AV *)sv_2mortal((SV *)newAV());
+	for (tmp_i = 0; $var\[tmp_i] != NULL; tmp_i++)
+	    av_push(tmp_list, newSVpv($var\[tmp_i], 0));
+	$arg = newRV((SV *) tmp_list);
+    }
+    else {
+	$arg = &PL_sv_undef;
+    }

@@ -1,0 +1,13 @@
+Changes
+GDAL.xs
+Makefile.PL
+MANIFEST
+ppport.h
+README
+typemap
+t/Geo-GDAL.t
+t/sample.tif
+fallback/const-c.inc
+fallback/const-xs.inc
+GDAL.pm
+META.yml                                 Module meta-data (added by MakeMaker)

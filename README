@@ -1,0 +1,278 @@
+NAME
+    Geo::GDAL - read/write raster-based GIS data with the GDAL library
+
+SYNOPSIS
+      use Geo::GDAL;
+
+      my $data = Geo::GDAL::Open("sample.tif", GA_Update) ;
+
+      my $transform = $data->GetGeoTransform;
+      my $inv = Geo::GDAL::InvGeoTransform($transform);
+      my ($pixel_x, $pixel_y) =
+        Geo::GDAL::ApplyGeoTransform($inv, $geo_x, $geo_y);
+
+      my $band = $data->GetRasterBand(1);
+      my $data = $band->Read($pixel_x, $pixel_y, 10, 10);
+      my $value = $data->[$x][$y];
+
+      $band->Write($pixel_x, $pixel_y, $data);
+    
+      my $type = $band->GetRasterDataType; # e.g. GDT_Float32
+      my $buf = $band->RasterIO(
+        GF_Read, $pixel_x, $pixel_y, 8, 8, GDT_Float32);
+      my @stream = unpack("f*", $buf);
+
+DESCRIPTION
+    Geo::GDAL uses the powerful Geospatial Data Abstraction Library, or
+    libgdal, to read and write geospatial raster data from Perl. Geo::GDAL
+    provides OO-style classes for basic GDAL constructs, such as drivers,
+    datasets, raster bands, color tables,
+
+    Geo::GDAL can, for example, open a GeoTiff of elevation data, and obtain
+    the elevation at any point.
+
+    This software is ALPHA quality -- the XS bindings aren't done yet, so a
+    lot may break. You must have the GDAL library (including development
+    files) installed before attempting to build and install Geo::GDAL!
+
+CLASSES
+    Geo::GDAL attempts to provide bindings for all of the basic functions in
+    the GDAL C API, which is documented at
+    <http://www.remotesensing.org/gdal/gdal_8h.html>. In general, the "GDAL"
+    prefix has been removed, but the method names are otherwise still the
+    same.
+
+    Geo::GDAL breaks the GDAL C API down into the following packages. The
+    matching C struct is given in parentheses. Where possible, C functions
+    that take a particular struct as their first argument have been turned
+    into object methods in the Perl class matching the C struct.
+
+  Geo::GDAL::Driver (GDALDriverH)
+  Geo::GDAL::Dataset (GDALDriverH)
+  Geo::GDAL::RasterBand (GDALRasterBandH)
+  Geo::GDAL::ColorTable (GDALColorTableH)
+  Geo::GDAL::ColorEntry (GDALColorEntry)
+  Geo::GDAL::OptionDefinition (GDALOptionDefinition)
+  Geo::GDAL::GCP (GDAL_GCP)
+  Geo::GDAL::RPCInfo (GDALRPCInfo)
+SUPPORTED FUNCTIONS AND METHODS
+    The functions and methods from the following packages are more or less
+    expected to work. Other functions and methods may work as expected, but
+    OTOH, they may not. In particular GCP and ColorEntry support may be
+    little broken. Support for other functions and methods will be hopefully
+    added in future releases.
+
+  Geo::GDAL functions
+   AllRegister()
+    Note that Geo::GDAL::AllRegister() is called when Geo::GDAL is imported,
+    so you do not need to call it yourself.
+
+   ApplyGeoTransform($xform, $pixel, $line)
+    Applies the affine transform stored in $xform:
+
+      $x = $xform->[0] + $xform->[1] * $pixel + $xform->[2] * $line;
+      $y = $xform->[3] + $xform->[4] * $pixel + $xform->[5] * $line;
+
+    Returns ($x, $y). If you pass an inverted affine transform to
+    ApplyGeoTransform, the $pixel and $line arguments become $x and $y, and
+    pixel and line values are returned instead.
+
+   GetCacheMax()
+   GetCacheUsed()
+   GetColorInterpretationName()
+   GetDataTypeName()
+   GetDataTypeSize()
+   GetDescription()
+   GetDriver()
+    Returns a Geo::GDAL::Driver object.
+
+   GetDriverByName()
+    Returns a Geo::GDAL::Driver object.
+
+   GetDriverCount()
+   GetPaletteInterpretationName()
+   InvGeoTransform($transform)
+    Takes a reference to a six-element list containing an affine transform.
+    Returns a reference to a six-element list containing the inverse affine
+    transform.
+
+   Open($filename, $access)
+    Instantiates a Geo::GDAL::Dataset object. Use the GA_ReadOnly and
+    GA_Update constants to specify read-only versus read/write access.
+
+   OpenShared($filename, $access)
+    Returns a Geo::GDAL::Dataset object.
+
+   ReadWorldFile(pszBaseFilename, pszExtension)
+    Returns a reference to a six-element list containing the affine
+    transform.
+
+   SetCacheMax($nBytes)
+   SetDescription()
+   VersionInfo()
+   WriteWorldFile($filename, $extension, $transform)
+    Takes a filename, a file extension, and a reference to a six-element
+    list containing the affine transform.
+
+  Geo::GDAL::Driver methods
+   DeleteDataset($filename)
+   GetDriverHelpTopic()
+   GetDriverLongName()
+   GetDriverShortName()
+  Geo::GDAL::Dataset methods
+   Close()
+    Called automatically when a Geo::GDAL::Dataset is destroyed.
+
+   DereferenceDataset()
+   FlushCache()
+   GetAccess()
+   GetDatasetDriver()
+    Returns a Geo::GDAL::Driver object.
+
+   GetGeoTransform()
+    Returns a reference to a six-element list containing the affine
+    transform.
+
+   GetProjectionRef()
+   GetRasterBand($n)
+    Fetch raster band $n. Raster band numbering starts at 1. Returns a
+    Geo::GDAL::RasterBand object.
+
+   GetRasterCount()
+   GetRasterXSize()
+   GetRasterYSize()
+   ReferenceDataset()
+   SetGeoTransform($transform)
+    $transform should be a reference to a six-element list containing the
+    affine transform.
+
+   SetProjection($proj)
+  Geo::GDAL::RasterBand methods
+   ComputeRasterMinMax($approxOK)
+    Returns ($min, $max).
+
+   FillRaster($realValue, $imaginaryValue)
+   FlushRasterCache()
+   GetBandDataset()
+   GetBandNumber()
+   GetBlockSize()
+    Returns ($x_size, $y_size) in pixels.
+
+   GetRasterAccess()
+   GetRasterBandXSize()
+   GetRasterBandYSize()
+   GetRasterCategoryNames()
+    Returns a reference to a list of scalars, or undef if no category names
+    are available.
+
+   GetRasterColorInterpretation()
+   GetRasterColorTable()
+    Returns a Geo::GDAL::ColorTable object.
+
+   GetRasterDataType()
+   GetRasterMaximum()
+   GetRasterMetadata()
+    Returns a reference to a list of scalars, or undef if no metadata is
+    available.
+
+   GetRasterMinimum()
+   GetRasterNoDataValue()
+   GetRasterSampleOverview($n)
+    Returns an overview band of type Geo::GDAL::RasterBand containing at
+    least $n pixels.
+
+   GetRasterUnitType()
+   HasArbitraryOverviews()
+   RasterIO($RWFlag, $XOff, $YOff, $XSize, $YSize, $Buffer, $DataType)
+    Reads or writes a block of data from the raster band $XSize pixels wide
+    and $YSize pixels high, starting at ($XOff, $YOff) . The data is read
+    from/written to $Buffer, which should be an ordinary scalar, and is of
+    type $DataType, which should be one of the GDT_* constants.
+
+    When reading, undef may be passed in place of $Buffer, in which case
+    Geo::GDAL will allocate a scalar and return it. Otherwise, RasterIO()
+    returns $Buffer.
+
+    $Buffer is a packed scalar. Getting the data in and out of $Buffer
+    involves using pack() /unpack() and a template matching the data type
+    specified.
+
+    Chances are good you will want to use Geo::GDAL::Dataset's Read() and
+    Write() helper methods, instead.
+
+   Read($XOff, $YOff, $XSize, $YSize)
+    Read data from the raster band starting at pixel ($XOff, $YOff) into a
+    table of values -- a list of lists. The band's native data type is used.
+    Returns undef on failure. If $YSize is not provided, the area is assumed
+    to be square; if $XSize is not provided, only one pixel is returned.
+
+   ReadBlock($XBlockOff, $YBlockOff)
+    Read a "natural" block of data. Returns a packed scalar. You will need
+    to call GetRasterDataType() to figure out which unpack() template to
+    unpack the data with. See the gdal.h API documentation for more details.
+
+    Chances are good you will want to use Geo::GDAL::Dataset's Read() and
+    Write() helper methods, instead.
+
+   SetRasterCategoryNames($names)
+    $names must be a reference to a list of scalars.
+
+   SetRasterColorInterpretation($interp)
+   SetRasterColorTable($table)
+   SetRasterNoDataValue($val)
+   Write($XOff, $YOff, $Data)
+    Writes a table of values (list of lists) into the raster band starting
+    at pixel ($XOff, $YOff) . The band's native data type is assumed, and
+    floating point values are truncated as necessary. Returns undef on
+    failure.
+
+   WriteBlock($XBlockOff, $YBlockOff, $Data)
+    Write a "natural" block of data from a packed scalar. You will need to
+    call GetRasterDataType() to figure out which pack() template to pack the
+    data with. See the gdal.h API documentation for more details.
+
+    Chances are good you will want to use Geo::GDAL::Dataset's Read() and
+    Write() helper methods, instead.
+
+EXPORT
+    Geo::GDAL exports a ton of GDAL-related constants by default. Enjoy!
+
+BUGS
+    Admittedly tons. The bindings need to be finished. Patches welcome!
+
+SEE ALSO
+    GDAL homepage at
+
+    <http://www.remotesensing.org/gdal/>
+
+    In particular you will want to familiarize yourself with the GDAL C API,
+    which is documented:
+
+    <http://www.remotesensing.org/gdal/gdal_8h.html>
+
+    A tutorial to the API is available at:
+
+    <http://www.remotesensing.org/gdal/gdal_tutorial.html>
+
+    Finally, <http://maps.nocat.net> for which this was written.
+
+THANKS
+    Much appreciation is due to Frank Warmerdam for writing the GDAL
+    library, as well as many other useful Open Source GIS tools. Frank's
+    homepage is at <http://gdal.velocet.ca/~warmerda/>.
+
+    Appreciation is further due my collaborators Jo Walsh and Rich Gibson
+    for providing the motivation and moral support. Rich contributed
+    documentation as well. Also, thank you, Nick Clark, for answering my
+    silly XS questions on #p5p.
+
+AUTHOR
+    Schuyler D. Erle <schuyler@frot.org>
+
+COPYRIGHT AND LICENSE
+    Copyright (C) 2004 by Schuyler Erle
+
+    This library is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself, either Perl version 5.8.3 or, at
+    your option, any later version of Perl 5 you may have available.
+
