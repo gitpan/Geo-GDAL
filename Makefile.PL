@@ -2,14 +2,20 @@ use 5.006001;
 use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
+
+my $libs = `gdal-config --libs`
+    or warn "Can't find gdal-config in your path!\n",
+	    "(Are you sure you have libgdal installed?)\n";
+my $inc  = `gdal-config --cflags`;
+
 WriteMakefile(
     NAME              => 'Geo::GDAL',
     VERSION_FROM      => 'GDAL.pm', # finds $VERSION
     PREREQ_PM         => {'Test::More'  =>  0}, # e.g., Module::Name => 1.1
        AUTHOR         => 'Schuyler D. Erle <schuyler@nocat.net>',
-    LIBS              => ['-lgdal'], # e.g., '-lm'
+    LIBS              => [$libs], # e.g., '-lm'
     DEFINE            => '', # e.g., '-DHAVE_SOMETHING'
-    INC               => '-I.', # e.g., '-I. -I/usr/include/other'
+    INC               => $inc, # e.g., '-I. -I/usr/include/other'
 	# Un-comment this if you add C files to link with later:
     # OBJECT            => '$(O_FILES)', # link all the C files too
 );

@@ -569,7 +569,8 @@ GDALReadBlock(arg0, XOff, YOff)
 	int	XOff
 	int	YOff
     INIT:
-	I32 buf_size, x_size, y_size;
+	I32 buf_size;
+	int x_size, y_size;
 	SV * buf;
 	CPLErr ok;
     CODE:

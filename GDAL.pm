@@ -6,7 +6,7 @@ use Exporter;
 use strict;
 use warnings;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 our @ISA = qw(Exporter) ;
 
@@ -109,7 +109,7 @@ __END__
 
 =head1 NAME
 
-Geo::GDAL - read/write raster-based GIS data with the GDAL library
+Geo::GDAL - Read/write raster-based GIS data with the GDAL library
 
 =head1 SYNOPSIS
 
