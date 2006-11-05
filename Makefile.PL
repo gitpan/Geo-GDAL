@@ -1,58 +1,25 @@
-use 5.006001;
 use ExtUtils::MakeMaker;
-# See lib/ExtUtils/MakeMaker.pm for details of how to influence
-# the contents of the Makefile that is written.
 
-my $libs = `gdal-config --libs`
-    or warn "Can't find gdal-config in your path!\n",
-	    "(Are you sure you have libgdal installed?)\n";
-my $inc  = `gdal-config --cflags`;
+$libdir = $ENV{'PREFIX'} ? "-L$ENV{'PREFIX'}/lib" : '';
 
-WriteMakefile(
-    NAME              => 'Geo::GDAL',
-    VERSION_FROM      => 'GDAL.pm', # finds $VERSION
-    PREREQ_PM         => {'Test::More'  =>  0}, # e.g., Module::Name => 1.1
-       AUTHOR         => 'Schuyler D. Erle <schuyler@nocat.net>',
-    LIBS              => [$libs], # e.g., '-lm'
-    DEFINE            => '', # e.g., '-DHAVE_SOMETHING'
-    INC               => $inc, # e.g., '-I. -I/usr/include/other'
-	# Un-comment this if you add C files to link with later:
-    # OBJECT            => '$(O_FILES)', # link all the C files too
-);
-if  (eval {require ExtUtils::Constant; 1}) {
-  # If you edit these definitions to change the constants used by this module,
-  # you will need to use the generated const-c.inc and const-xs.inc
-  # files to replace their "fallback" counterparts before distributing your
-  # changes.
-  my @names = qw(
-		 CPLE_AppDefined CPLE_AssertionFailed CPLE_FileIO
-		 CPLE_IllegalArg CPLE_NoWriteAccess CPLE_None CPLE_NotSupported
-		 CPLE_OpenFailed CPLE_OutOfMemory CPLE_UserInterrupt
-		 CPLE_WrongFormat GDAL_RELEASE_DATE GDAL_VERSION_NUM);
-  push @names, map { {name => "$_", macro => 1} }
-	    qw(  CE_Debug CE_Failure CE_Fatal CE_None CE_Warning
-		 GA_ReadOnly GA_Update GCI_AlphaBand
-		 GCI_BlackBand GCI_BlueBand GCI_CyanBand GCI_GrayIndex
-		 GCI_GreenBand GCI_HueBand GCI_LightnessBand GCI_MagentaBand
-		 GCI_PaletteIndex GCI_RedBand GCI_SaturationBand GCI_Undefined
-		 GCI_YellowBand GDT_Byte GDT_CFloat32 GDT_CFloat64 GDT_CInt16
-		 GDT_CInt32 GDT_Float32 GDT_Float64 GDT_Int16 GDT_Int32
-		 GDT_TypeCount GDT_UInt16 GDT_UInt32 GDT_Unknown GF_Read
-		 GF_Write GPI_CMYK GPI_Gray GPI_HLS GPI_RGB );
-  ExtUtils::Constant::WriteConstants(
-                                     NAME         => 'Geo::GDAL',
-                                     NAMES        => \@names,
-                                     DEFAULT_TYPE => 'IV',
-                                     C_FILE       => 'const-c.inc',
-                                     XS_FILE      => 'const-xs.inc',
-                                  );
+$libdir .= "-L/msys/1.0/local/lib";
 
-}
-else {
-  use File::Copy;
-  use File::Spec;
-  foreach my $file ('const-c.inc', 'const-xs.inc') {
-    my $fallback = File::Spec->catfile('fallback', $file);
-    copy ($fallback, $file) or die "Can't copy $fallback to $file: $!";
-  }
+$ext = $^O eq 'MSWin32' ? '.dll' : '';
+
+%object = ( 'Geo::GDAL' => 'gdal_wrap.o',
+	    'Geo::GDAL::Const' => 'gdalconst_wrap.o',
+	    'Geo::OGR' => 'ogr_wrap.o',
+	    'Geo::OSR' => 'osr_wrap.o' );
+
+for my $module (keys %object) {
+    my $add = $module;
+    $add =~ s/:/_/g;
+    my $Makefile = $module eq 'Geo::GDAL' ? 'Makefile' : 'Makefile_'.$add;
+    WriteMakefile( NAME => $module,
+		   VERSION_FROM => 'lib/Geo/GDAL.pm',
+		   MAKEFILE => $Makefile,
+		   LIBS => "$libdir -L../../.libs -lgdal$ext -lgeos$ext -lgeos_c$ext",
+		   INC => '-I../../gcore -I../../alg -I../../ogr -I../../port',
+		   OBJECT => $object{$module}
+		   );
 }
