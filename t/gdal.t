@@ -1,7 +1,7 @@
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
-use vars qw/%known_driver $loaded $verbose @types %pack_types %types @fails/;
+use vars qw/%available_driver %test_driver $loaded $verbose @types @fails @tested_drivers/;
 
 $loaded = 1;
 
@@ -24,31 +24,14 @@ $verbose = $ENV{VERBOSE};
 #
 # if verbose = 1, all operations (skip,fail,ok) are printed out
 
-#system "rm -rf tmp_ds_*";
+system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 
-%known_driver = ('VRT' => 1,'GTiff' => 1,'NITF' => 1,'HFA' => 1,'SAR_CEOS' => 1,
-		 'CEOS' => 1,'ELAS' => 1,'AIG' => 1,'AAIGrid' => 1,'SDTS' => 1,
-		 'OGDI' => 1,'DTED' => 1,'PNG' => 1,'JPEG' => 1,'MEM' => 1,
-		 'JDEM' => 1,'GIF' => 1,'ESAT' => 1,'BSB' => 1,'XPM' => 1,
-		 'BMP' => 1,'AirSAR' => 1,'RS2' => 1,'PCIDSK' => 1,'PCRaster' => 1,
-		 'ILWIS' => 1,'RIK' => 1,'SGI' => 1,'Leveller' => 1,'GMT' => 1,
-		 'netCDF' => 1,'PNM' => 1,'DOQ1' => 1,'DOQ2' => 1,'ENVI' => 1,
-		 'EHdr' => 1,'PAux' => 1,'MFF' => 1,'MFF2' => 1,'FujiBAS' => 1,
-		 'GSC' => 1,'FAST' => 1,'BT' => 1,'LAN' => 1,'CPG' => 1,'IDA' => 1,
-		 'NDF' => 1,'DIPEx' => 1,'ISIS2' => 1,'L1B' => 1,'FIT' => 1,'RMF' => 1,
-		 'RST' => 1,'USGSDEM' => 1,'GXF' => 1);
+%test_driver = ('GTiff' => 1,
+		'MEM' => 1,
+		'EHdr' => 1,
+		);
 
-@types = ('GDT_Byte','GDT_UInt16','GDT_Int16','GDT_UInt32','GDT_Int32',
-	  'GDT_Float32','GDT_Float64','GDT_CInt16','GDT_CInt32','GDT_CFloat32','GDT_CFloat64');
-
-%pack_types = ('GDT_Byte'=>'c',
-	       'GDT_Int16'=>'s',
-	       'GDT_Int32'=>'i',
-	       'GDT_Float32'=>'f',
-	       'GDT_Float64'=>'d',
-	       );
-
-for (@types) {$types{$_} = eval "\$Geo::GDAL::Const::$_"};
+@types = (qw/Byte UInt16 Int16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64/);
 
 my %no_colortable = map {$_=>1} ('NITF','ELAS','BMP','ILWIS','BT','RMF','RST');
 
@@ -61,16 +44,127 @@ my %no_setgcp = map {$_=>1} ('HFA','ELAS','MEM','BMP','PCIDSK','ILWIS','PNM','EN
 
 my %no_open = map {$_=>1} ('VRT','MEM','ILWIS','MFF2');
 
-gdal_tests(Geo::GDAL::GetDriverCount());
-
-if (@fails) {
-    print STDERR "unexpected failures:\n",@fails;
-    print STDERR "all other tests ok.\n";
-} else {
-    print STDERR "all tests ok.\n";
+if (0) {
+    {
+	my $ds = Geo::GDAL::Dataset::Open('/data/Corine/lceugr100_00/lceugr100_00_pct.tif');
+	$b = $ds->GetRasterBand(1);
+    }
+    $b->GetDefaultRAT();
+    exit;
 }
 
-#system "rm -rf tmp_ds_*";
+{
+    my $driver = Geo::GDAL::GetDriver('MEM');
+    my $dataset = $driver->Create('tmp', 10, 10, 3 , 'Int32', []);
+    my $drv = $dataset->GetDriver;
+    ok($drv->isa('Geo::GDAL::Driver'), 'Geo::GDAL::Dataset::GetDriver');
+    my $r = $dataset->GetRasterBand(1);
+    my $g = $dataset->GetRasterBand(1);
+    my $b = $dataset->GetRasterBand(1);
+
+    my @out;
+    eval {
+	Geo::GDAL::ComputeMedianCutPCT($r,$g,$b,5,
+				       Geo::GDAL::ColorTable->new,
+				       sub {push @out, "@_"; 
+					    return $_[0] < 0.5 ? 1 : 0},6);
+    };
+    my @o;
+    for (0..5) {
+	my $a = 0.1*$_;
+	push @o, "$a Generating Histogram 6";
+    }
+    ok(is_deeply(\@out, \@o),"callback");
+
+    # without callback only implicit test:
+    Geo::GDAL::ComputeMedianCutPCT($r,$g,$b,5,Geo::GDAL::ColorTable->new);
+    
+    my $band = $r;
+
+    $colors = $band->ColorTable(Geo::GDAL::ColorTable->new);
+    @table = $colors->ColorTable([10,20,30,40],[20,20,30,40]);
+    for (@table) {
+	@$_ = (1,2,3,4) if $_->[0] == 10;
+    }
+    @table2 = $colors->ColorTable(@table);
+    ok($table[1]->[1] == 20, "colortable 1");
+    ok($table2[0]->[2] == 3, "colortable 2");
+
+    my @data;
+    for my $yoff (0..9) {
+	push @data, [$yoff..9+$yoff];
+    }
+    $band->WriteTile(\@data);
+    for my $yoff (4..6) {
+	for my $xoff (3..4) {
+	    $data[$yoff][$xoff] = 0;
+	}
+    }
+    my $data = $band->ReadTile(3,4,2,3);
+    for my $y (@$data) {
+	for (@$y) {
+	    $_ = 0;
+	}
+    }
+    $band->WriteTile($data,3,4);
+    $data = $band->ReadTile();
+    ok(is_deeply(\@data,$data), "write/read tile");
+}
+
+{
+    my $r = Geo::GDAL::RasterAttributeTable->new;
+    my @t = $r->FieldTypes;
+    my @u = $r->FieldUsages;
+    for my $u (@u) {
+	for my $t (@t) {
+	    $r->CreateColumn("$t $u", $t, $u);
+	}
+    }
+    my $n = $r->GetColumnCount;
+    my $n2 = @t * @u;
+    ok($n == $n2, "create rat column");
+    $r->SetRowCount(scalar(@t));
+    my $i = 0;
+    my $c = 0;
+    for (@t) {
+	if (/Integer/) {
+	    my $v = $r->Value($i, $c, 12);
+	    ok($v == 12, "rat int");
+	} elsif (/Real/) {
+	    my $v = $r->Value($i, $c, 1.23);
+	    ok($v == 1.23, "rat int");
+	} elsif (/String/) {
+	    my $v = $r->Value($i, $c, "abc");
+	    ok($v eq 'abc', "rat str");
+	}
+	$i++;
+	$c++;
+    }
+}
+
+gdal_tests();
+
+$src = Geo::OSR::SpatialReference->new();
+$src->ImportFromEPSG(2392);
+
+$xml = $src->ExportToXML();
+$a = Geo::GDAL::ParseXMLString($xml);
+$xml = Geo::GDAL::SerializeXMLTree($a);
+$b = Geo::GDAL::ParseXMLString($xml);
+ok(is_deeply($a, $b), "xml parsing");
+
+my @tmp = sort keys %available_driver;
+
+if (@fails) {
+    print STDERR "\nUnexpected failures:\n",@fails;
+    print STDERR "\nAvailable drivers were ",join(', ',@tmp),"\n";
+    print STDERR "Drivers used in tests were: ",join(', ',@tested_drivers),"\n";
+} else {
+    print STDERR "\nAvailable drivers were ",join(', ',@tmp),"\n";
+    print STDERR "Drivers used in tests were: ",join(', ',@tested_drivers),"\n";
+}
+
+system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 
 ###########################################
 #
@@ -79,18 +173,22 @@ if (@fails) {
 ###########################################
 
 sub gdal_tests {
-    my $nr_drivers_tested = shift;
 
-    for my $i (0..$nr_drivers_tested-1) {
-
-	my $driver = Geo::GDAL::GetDriver($i);
-	unless ($driver) {
-	    mytest('',undef,"Geo::GDAL::GetDriver($i)");
-	    next;
-	}
+    for my $driver (Geo::GDAL::Drivers) {
 
 	my $name = $driver->{ShortName};
-	mytest('skipped: not tested',undef,$name,'test') unless $known_driver{$name};
+	
+	unless (defined $name) {
+	    $name = 'unnamed';
+	    my $i = 1;
+	    while ($available_driver{$name}) {
+		$name = 'unnamed '.$i;
+		$i++;
+	    }
+	}
+
+	$available_driver{$name} = 1;
+	mytest('skipped: not tested',undef,$name,'test'),next unless $test_driver{$name};
 
         next if $name eq 'MFF2'; # does not work probably because of changes in hkvdataset.cpp
 	
@@ -103,7 +201,7 @@ sub gdal_tests {
 	
 	my @create = split /\s+/,$metadata->{DMD_CREATIONDATATYPES};
 	
-	@create = ('Byte','Float32','UInt16','Int16','CInt16','CInt32','CFloat32') 
+	@create = (qw/Byte Float32 UInt16 Int16 CInt16 CInt32 CFloat32/)
 	    if $driver->{ShortName} eq 'MFF2';
 	
 	unless (@create) {
@@ -115,6 +213,8 @@ sub gdal_tests {
 	    mytest('skipped: does not work?',undef,$name,'dataset create');
 	    next;
 	}
+
+	push @tested_drivers,$name;
 	
 	my $ext = $metadata->{DMD_EXTENSION} ? '.'.$metadata->{DMD_EXTENSION} : '';
 	$ext = '' if $driver->{ShortName} eq 'ILWIS';
@@ -125,21 +225,22 @@ sub gdal_tests {
 		mytest('skipped: does not work?',undef,$name,$type,'dataset create');
 		next;
 	    }
-	    
-	    my $typenr = $types{'GDT_'.$type};
+
 	    my $filename = "tmp_ds_".$driver->{ShortName}."_$type$ext";
 	    my $width = 100;
 	    my $height = 50;
 	    my $bands = 1;
 	    my $options = undef;
-	    
+
 	    my $dataset;
+
 	    eval {
-		$dataset = $driver->Create($filename, $width, $height, $bands , $typenr, []);
+		$dataset = $driver->Create($filename, $width, $height, $bands , $type, []);
 	    };
+
 	    mytest($dataset,'no error message',$name,$type,'dataset create');
 	    next unless $dataset;
-	    
+
 	    mytest($dataset->{RasterXSize} == $width,'RasterXSize',$name,$type,'RasterXSize');
 	    mytest($dataset->{RasterYSize} == $height,'RasterYSize',$name,$type,'RasterYSize');
 	    
@@ -158,13 +259,19 @@ sub gdal_tests {
 		mytest($transform->[5] == $transform2->[5],
 		       "$transform->[5] != $transform2->[5]",$name,$type,'Get/SetGeoTransform');
 	    }
-	    
+
 	    if ($no_nodatavalue{$driver->{ShortName}}) 
 	    {
 		mytest('skipped',undef,$name,$type,'Get/SetNoDataValue');
 		
 	    } else
 	    {
+		if ($name ne 'GTiff') {
+		    $band->ColorInterpretation('GreenBand');
+		    my $value = $band->ColorInterpretation;
+		    mytest($value eq 'GreenBand',"$value ne GreenBand",$name,$type,'ColorInterpretation');
+		}
+
 		$band->SetNoDataValue(5);
 		my $value = $band->GetNoDataValue;
 		mytest($value == 5,"$value != 5",$name,$type,'Get/SetNoDataValue');
@@ -178,11 +285,12 @@ sub gdal_tests {
 		
 	    } else 
 	    {
-		my $colortable = new Geo::GDAL::ColorTable();
+		#my $colortable = Geo::GDAL::ColorTable->create('RGB');
+		my $colortable = Geo::GDAL::ColorTable->new($Geo::GDAL::Constc::GPI_Gray);
 		my @rgba = (255,0,0,255);
 		$colortable->SetColorEntry(0, \@rgba);
-		$band->SetRasterColorTable($colortable);
-		$colortable = $band->GetRasterColorTable;
+		$band->ColorTable($colortable);
+		$colortable = $band->ColorTable;
 		my @rgba2 = $colortable->GetColorEntry(0);
 		
 		mytest($rgba[0] == $rgba2[0] and
@@ -191,7 +299,10 @@ sub gdal_tests {
 		       $rgba[3] == $rgba2[3],"colors do not match",$name,$type,'Colortable');
 	    }
 	    
-	    my $pc = $pack_types{"GDT_$type"};
+	    my $pc;
+	    eval {
+		$pc = Geo::GDAL::PackCharacter($band->{DataType});
+	    };
 	    
 	    if ($driver->{ShortName} eq 'VRT') 
 	    {
@@ -210,6 +321,7 @@ sub gdal_tests {
 		    $band->WriteRaster( 0, $yoff, $width, 1, $scanline );
 		}
 	    }
+
 	    
 	    if ($no_setgcp{$driver->{ShortName}})
 	    {
@@ -257,6 +369,12 @@ sub gdal_tests {
 		    mytest($dataset->{RasterYSize} == $height,'RasterYSize',$name,$type,'RasterYSize');
 		    
 		    my $band = $dataset->GetRasterBand(1);
+
+		    {
+			my @a = ('abc','def');
+			my @b = $band->CategoryNames(@a);
+			ok(is_deeply(\@a, \@b,"$name,$type,CategoryNames"));
+		    }
 		    
 		    if ($pc) {
 			
