@@ -22,7 +22,7 @@
 # @return reference to an array of possible projection methods
 
 ## @fn @GetProjectionMethodParameterList($method)
-# @param method and projection method
+# @param method projection method name
 # @return (arrayref parameters, $projection_name)
 
 ## @fn @GetProjectionMethodParamInfo($method, $parameter)
@@ -279,6 +279,8 @@
 
 
 ## @class Geo::OSR::SpatialReference
+# @brief <a href="http://www.gdal.org/ogr/classOGRSpatialReference.html">Documentation
+# of the underlying C++ class at www.gdal.org</a>
 
 ## @ignore DISOWN
 ## @ignore ACQUIRE
@@ -287,6 +289,17 @@
 
 ## @cmethod Geo::OSR::SpatialReference new($wkt = undef)
 # @param wkt well known text
+# @return a new Geo::OSR::SpatialReference object
+
+## @cmethod Geo::OSR::SpatialReference create(%params)
+# Create a new spatial reference object using named parameters. This
+# constructor recognizes the following named parameters: WKT, Text,
+# Proj4, ESRI, EPSG, PCI, USGS, XML.
+#
+# Usage:
+# \code
+# $sr = Geo::OSR::SpatialReference->create(...arguments...);
+# \endcode
 # @return a new Geo::OSR::SpatialReference object
 
 ## @method $IsSame($rhs)
@@ -428,7 +441,9 @@
 
 ## @method ImportFromXML($xml_string)
 
-## @method $ExportToWkt()
+## @method $AsText()
+# Return a well known text representation of this spatial reference
+# system.  An alternative name: ExportToWkt.
 # @return WKT string
 
 ## @method $ExportToPrettyWkt($simplify = 0)
@@ -541,6 +556,7 @@
 # @return arrayref = [$x, $y, $z]
 
 ## @method TransformPoints(\@points)
-# @param points [in/out] a reference to a list of points that is
-# modified in-place. A list of points is: ([x, y, z], [x, y, z], ...),
-# where z is optional.
+# @param points [in/out] a reference to a list of points (line string
+# or ring) that is modified in-place. A list of points is: ([x, y, z],
+# [x, y, z], ...), where z is optional. Supports also lists of line
+# strings and polygons.

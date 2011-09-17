@@ -56,28 +56,96 @@ if (0) {
 {
     my $driver = Geo::GDAL::GetDriver('MEM');
     my $dataset = $driver->Create('tmp', 10, 10, 3 , 'Int32', []);
+    ok($dataset->isa('Geo::GDAL::Dataset'), 'Geo::GDAL::Dataset');
+    ok($dataset->{RasterXSize} == 10, "Geo::GDAL::Dataset::RasterXSize $dataset->{RasterXSize}");
+    ok($dataset->{RasterCount} == 3, "Geo::GDAL::Dataset::RasterCount $dataset->{RasterCount}");
     my $drv = $dataset->GetDriver;
     ok($drv->isa('Geo::GDAL::Driver'), 'Geo::GDAL::Dataset::GetDriver');
+    my @size = $dataset->Size();
+    ok(is_deeply([10,10], \@size), "Geo::GDAL::Dataset::Size @size");
     my $r = $dataset->GetRasterBand(1);
-    my $g = $dataset->GetRasterBand(1);
-    my $b = $dataset->GetRasterBand(1);
+    my $g = $dataset->GetRasterBand(2);
+    my $b = $dataset->GetRasterBand(3);
 
+    $b->WriteTile([
+    [1,2,3,4,5,6,7,8,9,10],
+    [1,2,3,4,5,6,7,8,9,10],
+    [1,2,3,4,5,6,7,8,9,10],
+    [1,2,3,0,0,0,0,8,9,10],
+    [1,2,3,0,0,0,0,8,9,10],
+    [1,2,3,0,0,0,0,8,9,10],
+    [1,2,3,0,0,0,0,8,9,10],
+    [1,2,3,4,5,6,7,8,9,10],
+    [1,2,3,4,5,6,7,8,9,10],
+    [1,2,3,4,5,6,7,8,9,10]
+    ]);
+    $r->WriteTile([
+    [1,2,3,4,5,6,7,8,9,10],
+    [1,2,3,4,5,6,7,8,9,10],
+    [1,2,3,4,5,6,7,8,9,10],
+    [1,2,3,0,0,0,0,8,9,10],
+    [1,2,3,0,0,0,0,8,9,10],
+    [1,2,3,0,0,0,0,8,9,10],
+    [1,2,3,0,0,0,0,8,9,10],
+    [1,2,3,4,5,6,7,8,9,10],
+    [1,2,3,4,5,6,7,8,9,10],
+    [1,2,3,4,5,6,7,8,9,10]
+    ]);
+    $g->WriteTile($b->ReadTile);
+    $b->FillNodata($r);
+    #print STDERR "@$_\n" for (@{$b->ReadTile()});
+
+    my $histogram;
+    eval {
+	@histogram = $b->GetHistogram();
+    };
+    ok($#histogram == 255, "Histogram: @histogram");
+    eval {
+	$b->SetDefaultHistogram(1,10,[0..255]);
+    };
+    my ($min, $max);
+    eval {
+	($min,$max,$histogram) = $b->GetDefaultHistogram();
+    };
+    ok(($#$histogram == 255), "Default Histogram $#histogram == 255");
+    eval {
+	@histogram = $b->GetHistogram(Min=>0, Max=>100, Buckets=>20);
+    };
+    ok($#histogram == 19, "Histogram with parameters: @histogram");
+
+    my @o;
+    for (0..5) {
+	my $a = 0.1*$_;
+	push @o, "$a Generating Histogram 1";
+    }
     my @out;
+    $callback = sub {
+    	      push @out, "@_";	
+    	      return $_[0] < 0.5 ? 1 : 0 };	
     eval {
 	Geo::GDAL::ComputeMedianCutPCT($r,$g,$b,5,
 				       Geo::GDAL::ColorTable->new,
-				       sub {push @out, "@_"; 
-					    return $_[0] < 0.5 ? 1 : 0},6);
+				       $callback
+				       );
     };
-    my @o;
+    ok(is_deeply(\@out, \@o), "callback without callback_data");
+    @o = ();
     for (0..5) {
 	my $a = 0.1*$_;
 	push @o, "$a Generating Histogram 6";
     }
-    ok(is_deeply(\@out, \@o),"callback");
+    @out = ();
+    eval {
+	Geo::GDAL::ComputeMedianCutPCT($r,$g,$b,5,
+				       Geo::GDAL::ColorTable->new,
+				       $callback,6);
+    };
+    ok(is_deeply(\@out, \@o), "callback with callback_data");
 
     # without callback only implicit test:
     Geo::GDAL::ComputeMedianCutPCT($r,$g,$b,5,Geo::GDAL::ColorTable->new);
+
+    Geo::GDAL::RegenerateOverview($r, $b, 'GAUSS');
     
     my $band = $r;
 
