@@ -1530,18 +1530,17 @@ SWIG_Perl_SetModule(swig_module_info *module) {
 #define SWIGTYPE_p_GDALTransformerInfoShadow swig_types[12]
 #define SWIGTYPE_p_GDAL_GCP swig_types[13]
 #define SWIGTYPE_p_OGRLayerShadow swig_types[14]
-#define SWIGTYPE_p_SavedEnv swig_types[15]
-#define SWIGTYPE_p_VSIStatBufL swig_types[16]
-#define SWIGTYPE_p_char swig_types[17]
-#define SWIGTYPE_p_double swig_types[18]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[19]
-#define SWIGTYPE_p_int swig_types[20]
-#define SWIGTYPE_p_p_GDAL_GCP swig_types[21]
-#define SWIGTYPE_p_p_char swig_types[22]
-#define SWIGTYPE_p_p_int swig_types[23]
-#define SWIGTYPE_p_void swig_types[24]
-static swig_type_info *swig_types[26];
-static swig_module_info swig_module = {swig_types, 25, 0, 0, 0, 0};
+#define SWIGTYPE_p_VSIStatBufL swig_types[15]
+#define SWIGTYPE_p_char swig_types[16]
+#define SWIGTYPE_p_double swig_types[17]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[18]
+#define SWIGTYPE_p_int swig_types[19]
+#define SWIGTYPE_p_p_GDAL_GCP swig_types[20]
+#define SWIGTYPE_p_p_char swig_types[21]
+#define SWIGTYPE_p_p_int swig_types[22]
+#define SWIGTYPE_p_void swig_types[23]
+static swig_type_info *swig_types[25];
+static swig_module_info swig_module = {swig_types, 24, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -1603,11 +1602,13 @@ typedef int RETURN_NONE;
 
 
 
+    #ifndef SWIG
     typedef struct
     {
 	SV *fct;
 	SV *data;
     } SavedEnv;
+    #endif
     int callback_d_cp_vp(double d, const char *cp, void *vp)
     {
 	int count, ret;
@@ -1893,26 +1894,6 @@ retStringAndCPLFree* EscapeString(int len, char *bin_string , int scheme=CPLES_S
 } 
 
 
-SWIGINTERNINLINE SV *
-SWIG_FromCharPtrAndSize(const char* carray, size_t size)
-{
-  SV *obj = sv_newmortal();
-  if (carray) {
-    sv_setpvn(obj, carray, size);
-  } else {
-    sv_setsv(obj, &PL_sv_undef);
-  }
-  return obj;
-}
-
-
-SWIGINTERNINLINE SV * 
-SWIG_FromCharPtr(const char *cptr)
-{ 
-  return SWIG_FromCharPtrAndSize(cptr, (cptr ? strlen(cptr) : 0));
-}
-
-
 const char *wrapper_CPLGetConfigOption( const char * pszKey, const char * pszDefault = NULL )
 {
     return CPLGetConfigOption( pszKey, pszDefault );
@@ -1933,6 +1914,77 @@ void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByt
 int wrapper_HasThreadSupport()
 {
     return strcmp(CPLGetThreadingModel(), "stub") != 0;
+}
+
+
+SWIGINTERN int
+SWIG_AsVal_unsigned_SS_long SWIG_PERL_DECL_ARGS_2(SV *obj, unsigned long *val) 
+{
+  if (SvUOK(obj)) {
+    if (val) *val = SvUV(obj);
+    return SWIG_OK;
+  } else  if (SvIOK(obj)) {
+    long v = SvIV(obj);
+    if (v >= 0) {
+      if (val) *val = v;
+      return SWIG_OK;
+    } else {
+      return SWIG_OverflowError;
+    }
+  } else {
+    int dispatch = 0;
+    const char *nptr = SvPV_nolen(obj);
+    if (nptr) {
+      char *endptr;
+      unsigned long v;
+      errno = 0;
+      v = strtoul(nptr, &endptr,0);
+      if (errno == ERANGE) {
+	errno = 0;
+	return SWIG_OverflowError;
+      } else {
+	if (*endptr == '\0') {
+	  if (val) *val = v;
+	  return SWIG_Str2NumCast(SWIG_OK);
+	}
+      }
+    }
+    if (!dispatch) {
+      double d;
+      int res = SWIG_AddCast(SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(obj,&d));
+      if (SWIG_IsOK(res) && SWIG_CanCastAsInteger(&d, 0, ULONG_MAX)) {
+	if (val) *val = (unsigned long)(d);
+	return res;
+      }
+    }
+  }
+  return SWIG_TypeError;
+}
+
+
+SWIGINTERNINLINE int
+SWIG_AsVal_size_t SWIG_PERL_DECL_ARGS_2(SV * obj, size_t *val)
+{
+  unsigned long v;
+  int res = SWIG_AsVal_unsigned_SS_long SWIG_PERL_CALL_ARGS_2(obj, val ? &v : 0);
+  if (SWIG_IsOK(res) && val) *val = static_cast< size_t >(v);
+  return res;
+}
+
+
+SWIGINTERNINLINE SV *
+SWIG_From_unsigned_SS_long  SWIG_PERL_DECL_ARGS_1(unsigned long value)
+{    
+  SV *obj = sv_newmortal();
+  sv_setuv(obj, (UV) value);
+  return obj;
+}
+
+
+SWIGINTERNINLINE SV *
+SWIG_From_size_t  SWIG_PERL_DECL_ARGS_1(size_t value)
+{    
+  return SWIG_From_unsigned_SS_long  SWIG_PERL_CALL_ARGS_1(static_cast< unsigned long >(value));
 }
 
 SWIGINTERN char const *GDALMajorObjectShadow_GetDescription(GDALMajorObjectShadow *self){
@@ -2014,6 +2066,26 @@ SWIG_From_double  SWIG_PERL_DECL_ARGS_1(double value)
   SV *obj = sv_newmortal();
   sv_setnv(obj, value);
   return obj;
+}
+
+
+SWIGINTERNINLINE SV *
+SWIG_FromCharPtrAndSize(const char* carray, size_t size)
+{
+  SV *obj = sv_newmortal();
+  if (carray) {
+    sv_setpvn(obj, carray, size);
+  } else {
+    sv_setsv(obj, &PL_sv_undef);
+  }
+  return obj;
+}
+
+
+SWIGINTERNINLINE SV * 
+SWIG_FromCharPtr(const char *cptr)
+{ 
+  return SWIG_FromCharPtrAndSize(cptr, (cptr ? strlen(cptr) : 0));
 }
 
 SWIGINTERN GDAL_GCP *new_GDAL_GCP(double x=0.0,double y=0.0,double z=0.0,double pixel=0.0,double line=0.0,char const *info="",char const *id=""){
@@ -2830,6 +2902,12 @@ SWIG_From_bool  SWIG_PERL_DECL_ARGS_1(bool value)
   return obj;
 }
 
+SWIGINTERN char **GDALRasterBandShadow_GetCategoryNames(GDALRasterBandShadow *self){
+    return GDALGetRasterCategoryNames( self );
+  }
+SWIGINTERN CPLErr GDALRasterBandShadow_SetCategoryNames(GDALRasterBandShadow *self,char **papszCategoryNames){
+    return GDALSetRasterCategoryNames( self, papszCategoryNames );
+  }
 SWIGINTERN CPLErr GDALRasterBandShadow_ContourGenerate(GDALRasterBandShadow *self,double dfContourInterval,double dfContourBase,int nFixedLevelCount,double *padfFixedLevels,int bUseNoData,double dfNoDataValue,OGRLayerShadow *hLayer,int iIDField,int iElevField,GDALProgressFunc callback=NULL,void *callback_data=NULL){
 	return GDALContourGenerate( self, dfContourInterval, dfContourBase,
 				    nFixedLevelCount, padfFixedLevels,
@@ -3264,8 +3342,10 @@ static AV *XMLTreeToAV( CPLXMLNode *psTree )
     av = (AV*)sv_2mortal((SV*)newAV());
 
     av_store(av,0,newSViv((int) psTree->eType));
-    av_store(av,1,newSVpv(psTree->pszValue, strlen(psTree->pszValue)));
-
+    SV *sv = newSVpv(psTree->pszValue, strlen(psTree->pszValue));
+    SvUTF8_on(sv); /* expecting UTF-8 from GDAL */
+    av_store(av,1,sv);
+    
     for( psChild = psTree->psChild, iChild = 2; 
          psChild != NULL; 
          psChild = psChild->psNext, iChild++ )
@@ -3294,7 +3374,9 @@ static CPLXMLNode *AVToXMLTree( AV *av )
 	return NULL;
 
     nType = SvIV(*(av_fetch(av,0,0)));
-    pszText = SvPV_nolen(*(av_fetch(av,1,0)));
+    SV *sv = *(av_fetch(av,1,0));
+    sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
+    pszText = SvPV_nolen(sv);
     psThisNode = CPLCreateXMLNode( NULL, (CPLXMLNodeType) nType, pszText );
     
     for( iChild = 0; iChild < nChildCount; iChild++ )
@@ -3407,215 +3489,6 @@ SWIGCLASS_STATIC int swig_magic_readonly(pTHX_ SV *SWIGUNUSEDPARM(sv), MAGIC *SW
 #ifdef __cplusplus
 extern "C" {
 #endif
-XS(_wrap_SavedEnv_fct_set) {
-  {
-    SavedEnv *arg1 = (SavedEnv *) 0 ;
-    SV *arg2 = (SV *) 0 ;
-    void *argp1 = 0 ;
-    int res1 = 0 ;
-    int argvi = 0;
-    dXSARGS;
-    
-    if ((items < 2) || (items > 2)) {
-      SWIG_croak("Usage: SavedEnv_fct_set(self,fct);");
-    }
-    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_SavedEnv, 0 |  0 );
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SavedEnv_fct_set" "', argument " "1"" of type '" "SavedEnv *""'"); 
-    }
-    arg1 = reinterpret_cast< SavedEnv * >(argp1);
-    arg2 = ST(1);
-    if (arg1) (arg1)->fct = arg2;
-    ST(argvi) = sv_newmortal();
-    
-    
-    XSRETURN(argvi);
-  fail:
-    
-    
-    SWIG_croak_null();
-  }
-}
-
-
-XS(_wrap_SavedEnv_fct_get) {
-  {
-    SavedEnv *arg1 = (SavedEnv *) 0 ;
-    void *argp1 = 0 ;
-    int res1 = 0 ;
-    int argvi = 0;
-    SV *result = 0 ;
-    dXSARGS;
-    
-    if ((items < 1) || (items > 1)) {
-      SWIG_croak("Usage: SavedEnv_fct_get(self);");
-    }
-    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_SavedEnv, 0 |  0 );
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SavedEnv_fct_get" "', argument " "1"" of type '" "SavedEnv *""'"); 
-    }
-    arg1 = reinterpret_cast< SavedEnv * >(argp1);
-    result = (SV *) ((arg1)->fct);
-    ST(argvi) = result; argvi++ ;
-    
-    XSRETURN(argvi);
-  fail:
-    
-    SWIG_croak_null();
-  }
-}
-
-
-XS(_wrap_SavedEnv_data_set) {
-  {
-    SavedEnv *arg1 = (SavedEnv *) 0 ;
-    SV *arg2 = (SV *) 0 ;
-    void *argp1 = 0 ;
-    int res1 = 0 ;
-    int argvi = 0;
-    dXSARGS;
-    
-    if ((items < 2) || (items > 2)) {
-      SWIG_croak("Usage: SavedEnv_data_set(self,data);");
-    }
-    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_SavedEnv, 0 |  0 );
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SavedEnv_data_set" "', argument " "1"" of type '" "SavedEnv *""'"); 
-    }
-    arg1 = reinterpret_cast< SavedEnv * >(argp1);
-    arg2 = ST(1);
-    if (arg1) (arg1)->data = arg2;
-    ST(argvi) = sv_newmortal();
-    
-    
-    XSRETURN(argvi);
-  fail:
-    
-    
-    SWIG_croak_null();
-  }
-}
-
-
-XS(_wrap_SavedEnv_data_get) {
-  {
-    SavedEnv *arg1 = (SavedEnv *) 0 ;
-    void *argp1 = 0 ;
-    int res1 = 0 ;
-    int argvi = 0;
-    SV *result = 0 ;
-    dXSARGS;
-    
-    if ((items < 1) || (items > 1)) {
-      SWIG_croak("Usage: SavedEnv_data_get(self);");
-    }
-    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_SavedEnv, 0 |  0 );
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SavedEnv_data_get" "', argument " "1"" of type '" "SavedEnv *""'"); 
-    }
-    arg1 = reinterpret_cast< SavedEnv * >(argp1);
-    result = (SV *) ((arg1)->data);
-    ST(argvi) = result; argvi++ ;
-    
-    XSRETURN(argvi);
-  fail:
-    
-    SWIG_croak_null();
-  }
-}
-
-
-XS(_wrap_new_SavedEnv) {
-  {
-    int argvi = 0;
-    SavedEnv *result = 0 ;
-    dXSARGS;
-    
-    if ((items < 0) || (items > 0)) {
-      SWIG_croak("Usage: new_SavedEnv();");
-    }
-    {
-      CPLErrorReset();
-      result = (SavedEnv *)new SavedEnv();
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-        
-        
-        
-        
-        
-      }
-      
-      
-      /* 
-          Make warnings regular Perl warnings. This duplicates the warning
-          message if DontUseExceptions() is in effect (it is not by default).
-          */
-      if ( eclass == CE_Warning ) {
-        warn( CPLGetLastErrorMsg(), "%s" );
-      }
-      
-      
-    }
-    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_SavedEnv, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
-    XSRETURN(argvi);
-  fail:
-    SWIG_croak_null();
-  }
-}
-
-
-XS(_wrap_delete_SavedEnv) {
-  {
-    SavedEnv *arg1 = (SavedEnv *) 0 ;
-    void *argp1 = 0 ;
-    int res1 = 0 ;
-    int argvi = 0;
-    dXSARGS;
-    
-    if ((items < 1) || (items > 1)) {
-      SWIG_croak("Usage: delete_SavedEnv(self);");
-    }
-    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_SavedEnv, SWIG_POINTER_DISOWN |  0 );
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_SavedEnv" "', argument " "1"" of type '" "SavedEnv *""'"); 
-    }
-    arg1 = reinterpret_cast< SavedEnv * >(argp1);
-    {
-      CPLErrorReset();
-      delete arg1;
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-        
-        
-        
-        
-        
-      }
-      
-      
-      /* 
-          Make warnings regular Perl warnings. This duplicates the warning
-          message if DontUseExceptions() is in effect (it is not by default).
-          */
-      if ( eclass == CE_Warning ) {
-        warn( CPLGetLastErrorMsg(), "%s" );
-      }
-      
-      
-    }
-    ST(argvi) = sv_newmortal();
-    
-    XSRETURN(argvi);
-  fail:
-    
-    SWIG_croak_null();
-  }
-}
-
-
 XS(_wrap_callback_d_cp_vp) {
   {
     double arg1 ;
@@ -4286,7 +4159,13 @@ XS(_wrap_GetLastErrorMsg) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     XSRETURN(argvi);
   fail:
     SWIG_croak_null();
@@ -4297,20 +4176,17 @@ XS(_wrap_GetLastErrorMsg) {
 XS(_wrap_PushFinderLocation) {
   {
     char *arg1 = (char *) 0 ;
-    int res1 ;
-    char *buf1 = 0 ;
-    int alloc1 = 0 ;
     int argvi = 0;
     dXSARGS;
     
     if ((items < 1) || (items > 1)) {
       SWIG_croak("Usage: PushFinderLocation(utf8_path);");
     }
-    res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PushFinderLocation" "', argument " "1"" of type '" "char const *""'");
+    {
+      /* %typemap(in,numinputs=1) (const char* utf8_path) */
+      sv_utf8_upgrade(ST(0));
+      arg1 = SvPV_nolen(ST(0));
     }
-    arg1 = reinterpret_cast< char * >(buf1);
     {
       if (!arg1) {
         SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
@@ -4341,10 +4217,8 @@ XS(_wrap_PushFinderLocation) {
       
     }
     ST(argvi) = sv_newmortal();
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     XSRETURN(argvi);
   fail:
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     SWIG_croak_null();
   }
 }
@@ -4430,33 +4304,30 @@ XS(_wrap_FinderClean) {
 }
 
 
-XS(_wrap__FindFile) {
+XS(_wrap_FindFile) {
   {
     char *arg1 = (char *) 0 ;
     char *arg2 = (char *) 0 ;
     int res1 ;
     char *buf1 = 0 ;
     int alloc1 = 0 ;
-    int res2 ;
-    char *buf2 = 0 ;
-    int alloc2 = 0 ;
     int argvi = 0;
     char *result = 0 ;
     dXSARGS;
     
     if ((items < 2) || (items > 2)) {
-      SWIG_croak("Usage: _FindFile(pszClass,utf8_path);");
+      SWIG_croak("Usage: FindFile(pszClass,utf8_path);");
     }
     res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "_FindFile" "', argument " "1"" of type '" "char const *""'");
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FindFile" "', argument " "1"" of type '" "char const *""'");
     }
     arg1 = reinterpret_cast< char * >(buf1);
-    res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
-    if (!SWIG_IsOK(res2)) {
-      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "_FindFile" "', argument " "2"" of type '" "char const *""'");
+    {
+      /* %typemap(in,numinputs=1) (const char* utf8_path) */
+      sv_utf8_upgrade(ST(1));
+      arg2 = SvPV_nolen(ST(1));
     }
-    arg2 = reinterpret_cast< char * >(buf2);
     {
       if (!arg2) {
         SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
@@ -4486,36 +4357,37 @@ XS(_wrap__FindFile) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
-    if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
     XSRETURN(argvi);
   fail:
     if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
-    if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
     SWIG_croak_null();
   }
 }
 
 
-XS(_wrap__ReadDir) {
+XS(_wrap_ReadDir) {
   {
     char *arg1 = (char *) 0 ;
-    int res1 ;
-    char *buf1 = 0 ;
-    int alloc1 = 0 ;
     int argvi = 0;
     char **result = 0 ;
     dXSARGS;
     
     if ((items < 1) || (items > 1)) {
-      SWIG_croak("Usage: _ReadDir(utf8_path);");
+      SWIG_croak("Usage: ReadDir(utf8_path);");
     }
-    res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "_ReadDir" "', argument " "1"" of type '" "char const *""'");
+    {
+      /* %typemap(in,numinputs=1) (const char* utf8_path) */
+      sv_utf8_upgrade(ST(0));
+      arg1 = SvPV_nolen(ST(0));
     }
-    arg1 = reinterpret_cast< char * >(buf1);
     {
       if (!arg1) {
         SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
@@ -4551,9 +4423,10 @@ XS(_wrap__ReadDir) {
         if (result) {
           int i;
           for (i = 0; result[i]; i++) {
-            if (i>items-1) EXTEND(SP, 1);
-            ST(argvi) = sv_2mortal(newSVpv(result[i], 0));
-            argvi++;
+            if (argvi > items-1) EXTEND(SP, 1);
+            SV *sv = newSVpv(result[i], 0);
+            SvUTF8_on(sv); /* expecting GDAL to give us UTF-8 */
+            ST(argvi++) = sv_2mortal(sv);
           }
           CSLDestroy(result);
         }
@@ -4562,9 +4435,10 @@ XS(_wrap__ReadDir) {
         if (result) {
           int i;
           for (i = 0; result[i]; i++) {
-            SV *s = newSVpv(result[i], 0);
-            if (!av_store(av, i, s))
-            SvREFCNT_dec(s);
+            SV *sv = newSVpv(result[i], 0);
+            SvUTF8_on(sv); /* expecting GDAL to give us UTF-8 */
+            if (!av_store(av, i, sv))
+            SvREFCNT_dec(sv);
           }
           CSLDestroy(result);
         }
@@ -4572,10 +4446,8 @@ XS(_wrap__ReadDir) {
         argvi++;
       }
     }
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     XSRETURN(argvi);
   fail:
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     SWIG_croak_null();
   }
 }
@@ -4706,7 +4578,13 @@ XS(_wrap_GetConfigOption) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
     XSRETURN(argvi);
@@ -4853,9 +4731,6 @@ XS(_wrap_FileFromMemBuffer) {
     char *arg1 = (char *) 0 ;
     int arg2 ;
     GByte *arg3 = (GByte *) 0 ;
-    int res1 ;
-    char *buf1 = 0 ;
-    int alloc1 = 0 ;
     int val2 ;
     int ecode2 = 0 ;
     void *argp3 = 0 ;
@@ -4866,11 +4741,11 @@ XS(_wrap_FileFromMemBuffer) {
     if ((items < 3) || (items > 3)) {
       SWIG_croak("Usage: FileFromMemBuffer(utf8_path,nBytes,pabyData);");
     }
-    res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FileFromMemBuffer" "', argument " "1"" of type '" "char const *""'");
+    {
+      /* %typemap(in,numinputs=1) (const char* utf8_path) */
+      sv_utf8_upgrade(ST(0));
+      arg1 = SvPV_nolen(ST(0));
     }
-    arg1 = reinterpret_cast< char * >(buf1);
     ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
     if (!SWIG_IsOK(ecode2)) {
       SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "FileFromMemBuffer" "', argument " "2"" of type '" "int""'");
@@ -4911,12 +4786,10 @@ XS(_wrap_FileFromMemBuffer) {
       
     }
     ST(argvi) = sv_newmortal();
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     
     
     XSRETURN(argvi);
   fail:
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     
     
     SWIG_croak_null();
@@ -4927,21 +4800,18 @@ XS(_wrap_FileFromMemBuffer) {
 XS(_wrap_Unlink) {
   {
     char *arg1 = (char *) 0 ;
-    int res1 ;
-    char *buf1 = 0 ;
-    int alloc1 = 0 ;
     int argvi = 0;
     int result;
     dXSARGS;
     
     if ((items < 1) || (items > 1)) {
-      SWIG_croak("Usage: Unlink(pszFilename);");
+      SWIG_croak("Usage: Unlink(utf8_path);");
     }
-    res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Unlink" "', argument " "1"" of type '" "char const *""'");
+    {
+      /* %typemap(in,numinputs=1) (const char* utf8_path) */
+      sv_utf8_upgrade(ST(0));
+      arg1 = SvPV_nolen(ST(0));
     }
-    arg1 = reinterpret_cast< char * >(buf1);
     {
       if (!arg1) {
         SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
@@ -4972,10 +4842,8 @@ XS(_wrap_Unlink) {
       
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     XSRETURN(argvi);
   fail:
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     SWIG_croak_null();
   }
 }
@@ -5026,9 +4894,6 @@ XS(_wrap_Mkdir) {
   {
     char *arg1 = (char *) 0 ;
     int arg2 ;
-    int res1 ;
-    char *buf1 = 0 ;
-    int alloc1 = 0 ;
     int val2 ;
     int ecode2 = 0 ;
     int argvi = 0;
@@ -5038,11 +4903,11 @@ XS(_wrap_Mkdir) {
     if ((items < 2) || (items > 2)) {
       SWIG_croak("Usage: Mkdir(utf8_path,mode);");
     }
-    res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Mkdir" "', argument " "1"" of type '" "char const *""'");
+    {
+      /* %typemap(in,numinputs=1) (const char* utf8_path) */
+      sv_utf8_upgrade(ST(0));
+      arg1 = SvPV_nolen(ST(0));
     }
-    arg1 = reinterpret_cast< char * >(buf1);
     ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
     if (!SWIG_IsOK(ecode2)) {
       SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Mkdir" "', argument " "2"" of type '" "int""'");
@@ -5078,11 +4943,9 @@ XS(_wrap_Mkdir) {
       
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     
     XSRETURN(argvi);
   fail:
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     
     SWIG_croak_null();
   }
@@ -5092,9 +4955,6 @@ XS(_wrap_Mkdir) {
 XS(_wrap_Rmdir) {
   {
     char *arg1 = (char *) 0 ;
-    int res1 ;
-    char *buf1 = 0 ;
-    int alloc1 = 0 ;
     int argvi = 0;
     int result;
     dXSARGS;
@@ -5102,11 +4962,11 @@ XS(_wrap_Rmdir) {
     if ((items < 1) || (items > 1)) {
       SWIG_croak("Usage: Rmdir(utf8_path);");
     }
-    res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Rmdir" "', argument " "1"" of type '" "char const *""'");
+    {
+      /* %typemap(in,numinputs=1) (const char* utf8_path) */
+      sv_utf8_upgrade(ST(0));
+      arg1 = SvPV_nolen(ST(0));
     }
-    arg1 = reinterpret_cast< char * >(buf1);
     {
       if (!arg1) {
         SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
@@ -5137,10 +4997,8 @@ XS(_wrap_Rmdir) {
       
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     XSRETURN(argvi);
   fail:
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     SWIG_croak_null();
   }
 }
@@ -5213,9 +5071,6 @@ XS(_wrap_Stat) {
   {
     char *arg1 = (char *) 0 ;
     VSIStatBufL *arg2 = (VSIStatBufL *) 0 ;
-    int res1 ;
-    char *buf1 = 0 ;
-    int alloc1 = 0 ;
     VSIStatBufL sStatBuf2 ;
     int argvi = 0;
     RETURN_NONE result;
@@ -5228,11 +5083,11 @@ XS(_wrap_Stat) {
     if ((items < 1) || (items > 1)) {
       SWIG_croak("Usage: Stat(utf8_path);");
     }
-    res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Stat" "', argument " "1"" of type '" "char const *""'");
+    {
+      /* %typemap(in,numinputs=1) (const char* utf8_path) */
+      sv_utf8_upgrade(ST(0));
+      arg1 = SvPV_nolen(ST(0));
     }
-    arg1 = reinterpret_cast< char * >(buf1);
     {
       if (!arg1) {
         SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
@@ -5285,7 +5140,6 @@ XS(_wrap_Stat) {
       PUSHs(sv_2mortal(newSVuv(sStatBuf2.st_size)));
       argvi++;
     }
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     
     {
       /* %typemap(ret) RETURN_NONE_TRUE_IS_ERROR */
@@ -5295,7 +5149,6 @@ XS(_wrap_Stat) {
     }
     XSRETURN(argvi);
   fail:
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     
     SWIG_croak_null();
   }
@@ -5306,9 +5159,6 @@ XS(_wrap_VSIFOpenL) {
   {
     char *arg1 = (char *) 0 ;
     char *arg2 = (char *) 0 ;
-    int res1 ;
-    char *buf1 = 0 ;
-    int alloc1 = 0 ;
     int res2 ;
     char *buf2 = 0 ;
     int alloc2 = 0 ;
@@ -5319,11 +5169,11 @@ XS(_wrap_VSIFOpenL) {
     if ((items < 2) || (items > 2)) {
       SWIG_croak("Usage: VSIFOpenL(utf8_path,pszMode);");
     }
-    res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VSIFOpenL" "', argument " "1"" of type '" "char const *""'");
+    {
+      /* %typemap(in,numinputs=1) (const char* utf8_path) */
+      sv_utf8_upgrade(ST(0));
+      arg1 = SvPV_nolen(ST(0));
     }
-    arg1 = reinterpret_cast< char * >(buf1);
     res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
     if (!SWIG_IsOK(res2)) {
       SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "VSIFOpenL" "', argument " "2"" of type '" "char const *""'");
@@ -5359,11 +5209,9 @@ XS(_wrap_VSIFOpenL) {
       
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_void, 0 | 0); argvi++ ;
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
     XSRETURN(argvi);
   fail:
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
     SWIG_croak_null();
   }
@@ -5536,49 +5384,32 @@ XS(_wrap_VSIFTellL) {
 }
 
 
-XS(_wrap_VSIFWriteL) {
+XS(_wrap_VSIFTruncateL) {
   {
-    char *arg1 = (char *) 0 ;
-    int arg2 ;
-    int arg3 ;
-    VSILFILE *arg4 = (VSILFILE *) 0 ;
+    VSILFILE *arg1 = (VSILFILE *) 0 ;
+    long arg2 ;
     int res1 ;
-    char *buf1 = 0 ;
-    int alloc1 = 0 ;
-    int val2 ;
+    long val2 ;
     int ecode2 = 0 ;
-    int val3 ;
-    int ecode3 = 0 ;
-    int res4 ;
     int argvi = 0;
     int result;
     dXSARGS;
     
-    if ((items < 4) || (items > 4)) {
-      SWIG_croak("Usage: VSIFWriteL(char const *,int,int,VSILFILE *);");
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: VSIFTruncateL(VSILFILE *,long);");
     }
-    res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
+    res1 = SWIG_ConvertPtr(ST(0),SWIG_as_voidptrptr(&arg1), 0, 0);
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VSIFWriteL" "', argument " "1"" of type '" "char const *""'");
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VSIFTruncateL" "', argument " "1"" of type '" "VSILFILE *""'"); 
     }
-    arg1 = reinterpret_cast< char * >(buf1);
-    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    ecode2 = SWIG_AsVal_long SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
     if (!SWIG_IsOK(ecode2)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VSIFWriteL" "', argument " "2"" of type '" "int""'");
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VSIFTruncateL" "', argument " "2"" of type '" "long""'");
     } 
-    arg2 = static_cast< int >(val2);
-    ecode3 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
-    if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "VSIFWriteL" "', argument " "3"" of type '" "int""'");
-    } 
-    arg3 = static_cast< int >(val3);
-    res4 = SWIG_ConvertPtr(ST(3),SWIG_as_voidptrptr(&arg4), 0, 0);
-    if (!SWIG_IsOK(res4)) {
-      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "VSIFWriteL" "', argument " "4"" of type '" "VSILFILE *""'"); 
-    }
+    arg2 = static_cast< long >(val2);
     {
       CPLErrorReset();
-      result = (int)VSIFWriteL((char const *)arg1,arg2,arg3,arg4);
+      result = (int)VSIFTruncateL(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
@@ -5601,15 +5432,143 @@ XS(_wrap_VSIFWriteL) {
       
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
-    
     
     
     XSRETURN(argvi);
   fail:
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     
     
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_VSIFWriteL) {
+  {
+    void *arg1 = (void *) 0 ;
+    size_t arg2 ;
+    size_t arg3 ;
+    VSILFILE *arg4 = (VSILFILE *) 0 ;
+    int res4 ;
+    int argvi = 0;
+    size_t result;
+    dXSARGS;
+    
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: VSIFWriteL(pBuffer,nSize,nCount,fp);");
+    }
+    {
+      /* %typemap(in,numinputs=1) (const void *pBuffer, size_t nSize, size_t nCount) */
+      size_t len;
+      arg1 = SvPV(ST(0), len);
+      arg2 = 1;
+      arg3 = len;
+    }
+    res4 = SWIG_ConvertPtr(ST(1),SWIG_as_voidptrptr(&arg4), 0, 0);
+    if (!SWIG_IsOK(res4)) {
+      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "VSIFWriteL" "', argument " "4"" of type '" "VSILFILE *""'"); 
+    }
+    {
+      CPLErrorReset();
+      result = VSIFWriteL((void const *)arg1,arg2,arg3,arg4);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+        
+        
+      }
+      
+      
+      /* 
+          Make warnings regular Perl warnings. This duplicates the warning
+          message if DontUseExceptions() is in effect (it is not by default).
+          */
+      if ( eclass == CE_Warning ) {
+        warn( CPLGetLastErrorMsg(), "%s" );
+      }
+      
+      
+    }
+    ST(argvi) = SWIG_From_size_t  SWIG_PERL_CALL_ARGS_1(static_cast< size_t >(result)); argvi++ ;
+    
+    XSRETURN(argvi);
+  fail:
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_VSIFReadL) {
+  {
+    void *arg1 = (void *) 0 ;
+    size_t arg2 ;
+    size_t arg3 ;
+    VSILFILE *arg4 = (VSILFILE *) 0 ;
+    int res4 ;
+    int argvi = 0;
+    SV * _saved[1] ;
+    size_t result;
+    dXSARGS;
+    
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: VSIFReadL(pBuffer,nSize,nCount,fp);");
+    }
+    {
+      /* %typemap(in,numinputs=1) (void *pBuffer, size_t nSize, size_t nCount) */
+      size_t len = SvIV(ST(0));
+      arg1 = malloc(len);
+      arg2 = 1;
+      arg3 = len;
+    }
+    res4 = SWIG_ConvertPtr(ST(1),SWIG_as_voidptrptr(&arg4), 0, 0);
+    if (!SWIG_IsOK(res4)) {
+      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "VSIFReadL" "', argument " "4"" of type '" "VSILFILE *""'"); 
+    }
+    _saved[0] = ST(0);
+    {
+      CPLErrorReset();
+      result = VSIFReadL(arg1,arg2,arg3,arg4);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+        
+        
+      }
+      
+      
+      /* 
+          Make warnings regular Perl warnings. This duplicates the warning
+          message if DontUseExceptions() is in effect (it is not by default).
+          */
+      if ( eclass == CE_Warning ) {
+        warn( CPLGetLastErrorMsg(), "%s" );
+      }
+      
+      
+    }
+    {
+      /* %typemap(out) (size_t VSIFReadL) */
+    }
+    {
+      /* %typemap(argout) (void *pBuffer, size_t nSize, size_t nCount) */
+      if (result) {
+        ST(argvi) = newSVpvn((char*)arg1, result);
+        sv_2mortal(ST(argvi));
+      } else {
+        ST(argvi) = &PL_sv_undef;
+      }
+      argvi++;
+    }
+    
+    XSRETURN(argvi);
+  fail:
     
     SWIG_croak_null();
   }
@@ -5657,7 +5616,13 @@ XS(_wrap_MajorObject_GetDescription) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     XSRETURN(argvi);
   fail:
@@ -5693,9 +5658,9 @@ XS(_wrap_MajorObject_SetDescription) {
     }
     arg2 = reinterpret_cast< char * >(buf2);
     {
-      /* %typemap(check) (const char *pszNewDesc) */
-      if (!arg2)
-      SWIG_croak("The description must not be undefined");
+      if (!arg2) {
+        SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+      }
     }
     {
       CPLErrorReset();
@@ -6145,7 +6110,13 @@ XS(_wrap_MajorObject_GetMetadataItem) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
     if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
@@ -6293,7 +6264,13 @@ XS(_wrap_Driver_ShortName_get) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     XSRETURN(argvi);
   fail:
@@ -6344,7 +6321,13 @@ XS(_wrap_Driver_LongName_get) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     XSRETURN(argvi);
   fail:
@@ -6395,7 +6378,13 @@ XS(_wrap_Driver_HelpTopic_get) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     XSRETURN(argvi);
   fail:
@@ -6416,9 +6405,6 @@ XS(_wrap_Driver__Create) {
     char **arg7 = (char **) 0 ;
     void *argp1 = 0 ;
     int res1 = 0 ;
-    int res2 ;
-    char *buf2 = 0 ;
-    int alloc2 = 0 ;
     int val3 ;
     int ecode3 = 0 ;
     int val4 ;
@@ -6439,11 +6425,11 @@ XS(_wrap_Driver__Create) {
       SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Driver__Create" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
     }
     arg1 = reinterpret_cast< GDALDriverShadow * >(argp1);
-    res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
-    if (!SWIG_IsOK(res2)) {
-      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Driver__Create" "', argument " "2"" of type '" "char const *""'");
+    {
+      /* %typemap(in,numinputs=1) (const char* utf8_path) */
+      sv_utf8_upgrade(ST(1));
+      arg2 = SvPV_nolen(ST(1));
     }
-    arg2 = reinterpret_cast< char * >(buf2);
     ecode3 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
     if (!SWIG_IsOK(ecode3)) {
       SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Driver__Create" "', argument " "3"" of type '" "int""'");
@@ -6476,7 +6462,9 @@ XS(_wrap_Driver__Create) {
             if (SvTYPE(SvRV(ST(6)))==SVt_PVAV) {
               AV *av = (AV*)(SvRV(ST(6)));
               for (int i = 0; i < av_len(av)+1; i++) {
-                char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+                SV *sv = *(av_fetch(av, i, 0));
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
+                char *pszItem = SvPV_nolen(sv);
                 arg7 = CSLAddString( arg7, pszItem );
               }
             } else if (SvTYPE(SvRV(ST(6)))==SVt_PVHV) {
@@ -6487,6 +6475,7 @@ XS(_wrap_Driver__Create) {
               arg7 = NULL;
               hv_iterinit(hv);
               while(sv = hv_iternextsv(hv,&key,&klen)) {
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
                 arg7 = CSLAddNameValue( arg7, key, SvPV_nolen(sv) );
               }
             } else
@@ -6527,7 +6516,6 @@ XS(_wrap_Driver__Create) {
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
     
-    if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
     
     
     
@@ -6539,7 +6527,6 @@ XS(_wrap_Driver__Create) {
     XSRETURN(argvi);
   fail:
     
-    if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
     
     
     
@@ -6564,9 +6551,6 @@ XS(_wrap_Driver_CreateCopy) {
     void *arg7 = (void *) NULL ;
     void *argp1 = 0 ;
     int res1 = 0 ;
-    int res2 ;
-    char *buf2 = 0 ;
-    int alloc2 = 0 ;
     void *argp3 = 0 ;
     int res3 = 0 ;
     int val4 ;
@@ -6577,7 +6561,8 @@ XS(_wrap_Driver_CreateCopy) {
     
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    arg7 = (void *)(&saved_env);
     if ((items < 3) || (items > 7)) {
       SWIG_croak("Usage: Driver_CreateCopy(self,utf8_path,src,strict,options,callback,callback_data);");
     }
@@ -6586,11 +6571,11 @@ XS(_wrap_Driver_CreateCopy) {
       SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Driver_CreateCopy" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
     }
     arg1 = reinterpret_cast< GDALDriverShadow * >(argp1);
-    res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
-    if (!SWIG_IsOK(res2)) {
-      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Driver_CreateCopy" "', argument " "2"" of type '" "char const *""'");
+    {
+      /* %typemap(in,numinputs=1) (const char* utf8_path) */
+      sv_utf8_upgrade(ST(1));
+      arg2 = SvPV_nolen(ST(1));
     }
-    arg2 = reinterpret_cast< char * >(buf2);
     res3 = SWIG_ConvertPtr(ST(2), &argp3,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
     if (!SWIG_IsOK(res3)) {
       SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Driver_CreateCopy" "', argument " "3"" of type '" "GDALDatasetShadow *""'"); 
@@ -6611,7 +6596,9 @@ XS(_wrap_Driver_CreateCopy) {
             if (SvTYPE(SvRV(ST(4)))==SVt_PVAV) {
               AV *av = (AV*)(SvRV(ST(4)));
               for (int i = 0; i < av_len(av)+1; i++) {
-                char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+                SV *sv = *(av_fetch(av, i, 0));
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
+                char *pszItem = SvPV_nolen(sv);
                 arg5 = CSLAddString( arg5, pszItem );
               }
             } else if (SvTYPE(SvRV(ST(4)))==SVt_PVHV) {
@@ -6622,6 +6609,7 @@ XS(_wrap_Driver_CreateCopy) {
               arg5 = NULL;
               hv_iterinit(hv);
               while(sv = hv_iternextsv(hv,&key,&klen)) {
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
                 arg5 = CSLAddNameValue( arg5, key, SvPV_nolen(sv) );
               }
             } else
@@ -6653,8 +6641,6 @@ XS(_wrap_Driver_CreateCopy) {
         /* %typemap(in) (void* callback_data=NULL) */
         if (SvOK(ST(6)))
         saved_env.data = (SV *)ST(6);
-        if (saved_env.fct)
-        arg7 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
       }
     }
     {
@@ -6693,7 +6679,6 @@ XS(_wrap_Driver_CreateCopy) {
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
     
-    if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
     
     
     {
@@ -6704,7 +6689,6 @@ XS(_wrap_Driver_CreateCopy) {
     XSRETURN(argvi);
   fail:
     
-    if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
     
     
     {
@@ -6723,9 +6707,6 @@ XS(_wrap_Driver_Delete) {
     char *arg2 = (char *) 0 ;
     void *argp1 = 0 ;
     int res1 = 0 ;
-    int res2 ;
-    char *buf2 = 0 ;
-    int alloc2 = 0 ;
     int argvi = 0;
     int result;
     dXSARGS;
@@ -6738,11 +6719,11 @@ XS(_wrap_Driver_Delete) {
       SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Driver_Delete" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
     }
     arg1 = reinterpret_cast< GDALDriverShadow * >(argp1);
-    res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
-    if (!SWIG_IsOK(res2)) {
-      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Driver_Delete" "', argument " "2"" of type '" "char const *""'");
+    {
+      /* %typemap(in,numinputs=1) (const char* utf8_path) */
+      sv_utf8_upgrade(ST(1));
+      arg2 = SvPV_nolen(ST(1));
     }
-    arg2 = reinterpret_cast< char * >(buf2);
     {
       if (!arg2) {
         SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
@@ -6774,11 +6755,9 @@ XS(_wrap_Driver_Delete) {
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
     
-    if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
     XSRETURN(argvi);
   fail:
     
-    if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
     SWIG_croak_null();
   }
 }
@@ -8664,7 +8643,13 @@ XS(_wrap_GDAL_GCP_Info_get) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     XSRETURN(argvi);
   fail:
@@ -8786,7 +8771,13 @@ XS(_wrap_GDAL_GCP_Id_get) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     XSRETURN(argvi);
   fail:
@@ -9513,7 +9504,13 @@ XS(_wrap_GDAL_GCP_get_Info) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     XSRETURN(argvi);
   fail:
@@ -9635,7 +9632,13 @@ XS(_wrap_GDAL_GCP_get_Id) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     XSRETURN(argvi);
   fail:
@@ -9786,8 +9789,16 @@ XS(_wrap_GCPsToGeoTransform) {
     }
     {
       /* %typemap(argout) (double argout[ANY]) */
-      ST(argvi) = CreateArrayFromDoubleArray( arg3, 6 );
-      argvi++;
+      if (GIMME_V == G_ARRAY) {
+        /* return a list */
+        int i;
+        EXTEND(SP, argvi+6-items+1);
+        for (i = 0; i < 6; i++)
+        ST(argvi++) = sv_2mortal(newSVnv(arg3[i]));
+      } else {
+        ST(argvi) = CreateArrayFromDoubleArray( arg3, 6 );
+        argvi++;
+      }  
     }
     {
       /* %typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
@@ -10442,7 +10453,13 @@ XS(_wrap_Dataset_GetProjection) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     XSRETURN(argvi);
   fail:
@@ -10493,7 +10510,13 @@ XS(_wrap_Dataset_GetProjectionRef) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     XSRETURN(argvi);
   fail:
@@ -10621,8 +10644,16 @@ XS(_wrap_Dataset_GetGeoTransform) {
     ST(argvi) = sv_newmortal();
     {
       /* %typemap(argout) (double argout[ANY]) */
-      ST(argvi) = CreateArrayFromDoubleArray( arg2, 6 );
-      argvi++;
+      if (GIMME_V == G_ARRAY) {
+        /* return a list */
+        int i;
+        EXTEND(SP, argvi+6-items+1);
+        for (i = 0; i < 6; i++)
+        ST(argvi++) = sv_2mortal(newSVnv(arg2[i]));
+      } else {
+        ST(argvi) = CreateArrayFromDoubleArray( arg2, 6 );
+        argvi++;
+      }  
     }
     
     
@@ -10722,7 +10753,8 @@ XS(_wrap_Dataset_BuildOverviews) {
     
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    arg6 = (void *)(&saved_env);
     if ((items < 1) || (items > 5)) {
       SWIG_croak("Usage: Dataset_BuildOverviews(self,resampling,overviewlist,pOverviews,callback,callback_data);");
     }
@@ -10774,8 +10806,6 @@ XS(_wrap_Dataset_BuildOverviews) {
         /* %typemap(in) (void* callback_data=NULL) */
         if (SvOK(ST(4)))
         saved_env.data = (SV *)ST(4);
-        if (saved_env.fct)
-        arg6 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
       }
     }
     {
@@ -10918,7 +10948,13 @@ XS(_wrap_Dataset_GetGCPProjection) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     XSRETURN(argvi);
   fail:
@@ -11186,7 +11222,9 @@ XS(_wrap_Dataset__AddBand) {
             if (SvTYPE(SvRV(ST(2)))==SVt_PVAV) {
               AV *av = (AV*)(SvRV(ST(2)));
               for (int i = 0; i < av_len(av)+1; i++) {
-                char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+                SV *sv = *(av_fetch(av, i, 0));
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
+                char *pszItem = SvPV_nolen(sv);
                 arg3 = CSLAddString( arg3, pszItem );
               }
             } else if (SvTYPE(SvRV(ST(2)))==SVt_PVHV) {
@@ -11197,6 +11235,7 @@ XS(_wrap_Dataset__AddBand) {
               arg3 = NULL;
               hv_iterinit(hv);
               while(sv = hv_iternextsv(hv,&key,&klen)) {
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
                 arg3 = CSLAddNameValue( arg3, key, SvPV_nolen(sv) );
               }
             } else
@@ -11362,9 +11401,10 @@ XS(_wrap_Dataset_GetFileList) {
         if (result) {
           int i;
           for (i = 0; result[i]; i++) {
-            if (i>items-1) EXTEND(SP, 1);
-            ST(argvi) = sv_2mortal(newSVpv(result[i], 0));
-            argvi++;
+            if (argvi > items-1) EXTEND(SP, 1);
+            SV *sv = newSVpv(result[i], 0);
+            SvUTF8_on(sv); /* expecting GDAL to give us UTF-8 */
+            ST(argvi++) = sv_2mortal(sv);
           }
           CSLDestroy(result);
         }
@@ -11373,9 +11413,10 @@ XS(_wrap_Dataset_GetFileList) {
         if (result) {
           int i;
           for (i = 0; result[i]; i++) {
-            SV *s = newSVpv(result[i], 0);
-            if (!av_store(av, i, s))
-            SvREFCNT_dec(s);
+            SV *sv = newSVpv(result[i], 0);
+            SvUTF8_on(sv); /* expecting GDAL to give us UTF-8 */
+            if (!av_store(av, i, sv))
+            SvREFCNT_dec(sv);
           }
           CSLDestroy(result);
         }
@@ -12539,7 +12580,13 @@ XS(_wrap_Band_GetUnitType) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     XSRETURN(argvi);
   fail:
@@ -12661,9 +12708,10 @@ XS(_wrap_Band_GetRasterCategoryNames) {
       if ( stringarray != NULL ) {
         int n = CSLCount( stringarray );
         for ( int i = 0; i < n; i++ ) {
-          SV *s = newSVpv(stringarray[i], 0);
-          if (!av_store(av, i, s))
-          SvREFCNT_dec(s);
+          SV *sv = newSVpv(stringarray[i], 0);
+          SvUTF8_on(sv); /* expecting UTF-8 from GDAL */
+          if (!av_store(av, i, sv))
+          SvREFCNT_dec(sv);
         }
       }
       ST(argvi) = newRV_noinc((SV*)av);
@@ -12703,7 +12751,9 @@ XS(_wrap_Band_SetRasterCategoryNames) {
           if (SvTYPE(SvRV(ST(1)))==SVt_PVAV) {
             AV *av = (AV*)(SvRV(ST(1)));
             for (int i = 0; i < av_len(av)+1; i++) {
-              char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+              SV *sv = *(av_fetch(av, i, 0));
+              sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
+              char *pszItem = SvPV_nolen(sv);
               arg2 = CSLAddString( arg2, pszItem );
             }
           } else if (SvTYPE(SvRV(ST(1)))==SVt_PVHV) {
@@ -12714,6 +12764,7 @@ XS(_wrap_Band_SetRasterCategoryNames) {
             arg2 = NULL;
             hv_iterinit(hv);
             while(sv = hv_iternextsv(hv,&key,&klen)) {
+              sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
               arg2 = CSLAddNameValue( arg2, key, SvPV_nolen(sv) );
             }
           } else
@@ -13305,7 +13356,8 @@ XS(_wrap_Band_ComputeStatistics) {
     
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    arg8 = (void *)(&saved_env);
     arg3 = &temp3;
     arg4 = &temp4;
     arg5 = &temp5;
@@ -13345,8 +13397,6 @@ XS(_wrap_Band_ComputeStatistics) {
         /* %typemap(in) (void* callback_data=NULL) */
         if (SvOK(ST(3)))
         saved_env.data = (SV *)ST(3);
-        if (saved_env.fct)
-        arg8 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
       }
     }
     {
@@ -13790,8 +13840,16 @@ XS(_wrap_Band_ComputeRasterMinMax) {
     ST(argvi) = sv_newmortal();
     {
       /* %typemap(argout) (double argout[ANY]) */
-      ST(argvi) = CreateArrayFromDoubleArray( arg2, 2 );
-      argvi++;
+      if (GIMME_V == G_ARRAY) {
+        /* return a list */
+        int i;
+        EXTEND(SP, argvi+2-items+1);
+        for (i = 0; i < 2; i++)
+        ST(argvi++) = sv_2mortal(newSVnv(arg2[i]));
+      } else {
+        ST(argvi) = CreateArrayFromDoubleArray( arg2, 2 );
+        argvi++;
+      }  
     }
     
     
@@ -13865,8 +13923,16 @@ XS(_wrap_Band_ComputeBandStats) {
     ST(argvi) = sv_newmortal();
     {
       /* %typemap(argout) (double argout[ANY]) */
-      ST(argvi) = CreateArrayFromDoubleArray( arg2, 2 );
-      argvi++;
+      if (GIMME_V == G_ARRAY) {
+        /* return a list */
+        int i;
+        EXTEND(SP, argvi+2-items+1);
+        for (i = 0; i < 2; i++)
+        ST(argvi++) = sv_2mortal(newSVnv(arg2[i]));
+      } else {
+        ST(argvi) = CreateArrayFromDoubleArray( arg2, 2 );
+        argvi++;
+      }  
     }
     
     
@@ -14914,7 +14980,8 @@ XS(_wrap_Band__GetHistogram) {
     
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    arg9 = (void *)(&saved_env);
     if ((items < 1) || (items > 8)) {
       SWIG_croak("Usage: Band__GetHistogram(self,min,max,buckets,panHistogram,include_out_of_range,approx_ok,callback,callback_data);");
     }
@@ -14979,8 +15046,6 @@ XS(_wrap_Band__GetHistogram) {
         /* %typemap(in) (void* callback_data=NULL) */
         if (SvOK(ST(7)))
         saved_env.data = (SV *)ST(7);
-        if (saved_env.fct)
-        arg9 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
       }
     }
     {
@@ -15019,8 +15084,16 @@ XS(_wrap_Band__GetHistogram) {
     }
     {
       /* %typemap(argout) (int len, int *output) */
-      ST(argvi) = CreateArrayFromIntArray( arg5, arg4 );
-      argvi++;
+      if (GIMME_V == G_ARRAY) {
+        /* return a list */
+        int i;
+        EXTEND(SP, argvi+arg4-items+1);
+        for (i = 0; i < arg4; i++)
+        ST(argvi++) = sv_2mortal(newSVnv(arg5[i]));
+      } else {
+        ST(argvi) = CreateArrayFromIntArray( arg5, arg4 );
+        argvi++;
+      }
     }
     
     
@@ -15075,7 +15148,8 @@ XS(_wrap_Band_GetDefaultHistogram) {
     
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    arg8 = (void *)(&saved_env);
     arg2 = &temp2;
     arg3 = &temp3;
     {
@@ -15120,8 +15194,6 @@ XS(_wrap_Band_GetDefaultHistogram) {
         /* %typemap(in) (void* callback_data=NULL) */
         if (SvOK(ST(3)))
         saved_env.data = (SV *)ST(3);
-        if (saved_env.fct)
-        arg8 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
       }
     }
     {
@@ -15331,6 +15403,161 @@ XS(_wrap_Band_HasArbitraryOverviews) {
 }
 
 
+XS(_wrap_Band_GetCategoryNames) {
+  {
+    GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int argvi = 0;
+    char **result = 0 ;
+    dXSARGS;
+    
+    if ((items < 1) || (items > 1)) {
+      SWIG_croak("Usage: Band_GetCategoryNames(self);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_GetCategoryNames" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+    {
+      CPLErrorReset();
+      result = (char **)GDALRasterBandShadow_GetCategoryNames(arg1);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+        
+        
+      }
+      
+      
+      /* 
+          Make warnings regular Perl warnings. This duplicates the warning
+          message if DontUseExceptions() is in effect (it is not by default).
+          */
+      if ( eclass == CE_Warning ) {
+        warn( CPLGetLastErrorMsg(), "%s" );
+      }
+      
+      
+    }
+    {
+      /* %typemap(out) char **options -> ( string ) */
+      AV* av = (AV*)sv_2mortal((SV*)newAV());
+      char **stringarray = result;
+      if ( stringarray != NULL ) {
+        int n = CSLCount( stringarray );
+        for ( int i = 0; i < n; i++ ) {
+          SV *sv = newSVpv(stringarray[i], 0);
+          SvUTF8_on(sv); /* expecting UTF-8 from GDAL */
+          if (!av_store(av, i, sv))
+          SvREFCNT_dec(sv);
+        }
+      }
+      ST(argvi) = newRV_noinc((SV*)av);
+      argvi++;
+    }
+    
+    XSRETURN(argvi);
+  fail:
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_Band_SetCategoryNames) {
+  {
+    GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+    char **arg2 = (char **) 0 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int argvi = 0;
+    CPLErr result;
+    dXSARGS;
+    
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: Band_SetCategoryNames(self,papszCategoryNames);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_SetCategoryNames" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+    {
+      /* %typemap(in) char **options */
+      if (SvOK(ST(1))) {
+        if (SvROK(ST(1))) {
+          if (SvTYPE(SvRV(ST(1)))==SVt_PVAV) {
+            AV *av = (AV*)(SvRV(ST(1)));
+            for (int i = 0; i < av_len(av)+1; i++) {
+              SV *sv = *(av_fetch(av, i, 0));
+              sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
+              char *pszItem = SvPV_nolen(sv);
+              arg2 = CSLAddString( arg2, pszItem );
+            }
+          } else if (SvTYPE(SvRV(ST(1)))==SVt_PVHV) {
+            HV *hv = (HV*)SvRV(ST(1));
+            SV *sv;
+            char *key;
+            I32 klen;
+            arg2 = NULL;
+            hv_iterinit(hv);
+            while(sv = hv_iternextsv(hv,&key,&klen)) {
+              sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
+              arg2 = CSLAddNameValue( arg2, key, SvPV_nolen(sv) );
+            }
+          } else
+          SWIG_croak("'options' is not a reference to an array or hash");
+        } else
+        SWIG_croak("'options' is not a reference");   
+      }
+    }
+    {
+      CPLErrorReset();
+      result = (CPLErr)GDALRasterBandShadow_SetCategoryNames(arg1,arg2);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+        
+        
+      }
+      
+      
+      /* 
+          Make warnings regular Perl warnings. This duplicates the warning
+          message if DontUseExceptions() is in effect (it is not by default).
+          */
+      if ( eclass == CE_Warning ) {
+        warn( CPLGetLastErrorMsg(), "%s" );
+      }
+      
+      
+    }
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
+    
+    {
+      /* %typemap(freearg) char **options */
+      if (arg2) CSLDestroy( arg2 );
+    }
+    XSRETURN(argvi);
+  fail:
+    
+    {
+      /* %typemap(freearg) char **options */
+      if (arg2) CSLDestroy( arg2 );
+    }
+    SWIG_croak_null();
+  }
+}
+
+
 XS(_wrap_Band_ContourGenerate) {
   {
     GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
@@ -15363,7 +15590,8 @@ XS(_wrap_Band_ContourGenerate) {
     
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    arg12 = (void *)(&saved_env);
     if ((items < 8) || (items > 10)) {
       SWIG_croak("Usage: Band_ContourGenerate(self,dfContourInterval,dfContourBase,nFixedLevelCount,padfFixedLevels,bUseNoData,dfNoDataValue,hLayer,iIDField,iElevField,callback,callback_data);");
     }
@@ -15436,8 +15664,6 @@ XS(_wrap_Band_ContourGenerate) {
         /* %typemap(in) (void* callback_data=NULL) */
         if (SvOK(ST(9)))
         saved_env.data = (SV *)ST(9);
-        if (saved_env.fct)
-        arg12 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
       }
     }
     {
@@ -16351,7 +16577,13 @@ XS(_wrap_RasterAttributeTable_GetNameOfCol) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     
     XSRETURN(argvi);
@@ -16654,7 +16886,13 @@ XS(_wrap_RasterAttributeTable_GetValueAsString) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     
     
@@ -16845,6 +17083,7 @@ XS(_wrap_RasterAttributeTable_SetValueAsString) {
     arg3 = static_cast< int >(val3);
     {
       /* %typemap(in) (tostring argin) */
+      sv_utf8_upgrade(ST(3)); /* GDAL expects UTF-8 */
       arg4 = SvPV_nolen( ST(3) ); 
     }
     {
@@ -17493,7 +17732,8 @@ XS(_wrap__ComputeMedianCutPCT) {
     
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    arg7 = (void *)(&saved_env);
     if ((items < 5) || (items > 7)) {
       SWIG_croak("Usage: _ComputeMedianCutPCT(red,green,blue,num_colors,colors,callback,callback_data);");
     }
@@ -17544,8 +17784,6 @@ XS(_wrap__ComputeMedianCutPCT) {
         /* %typemap(in) (void* callback_data=NULL) */
         if (SvOK(ST(6)))
         saved_env.data = (SV *)ST(6);
-        if (saved_env.fct)
-        arg7 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
       }
     }
     {
@@ -17637,7 +17875,8 @@ XS(_wrap__DitherRGB2PCT) {
     
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    arg7 = (void *)(&saved_env);
     if ((items < 5) || (items > 7)) {
       SWIG_croak("Usage: _DitherRGB2PCT(red,green,blue,target,colors,callback,callback_data);");
     }
@@ -17688,8 +17927,6 @@ XS(_wrap__DitherRGB2PCT) {
         /* %typemap(in) (void* callback_data=NULL) */
         if (SvOK(ST(6)))
         saved_env.data = (SV *)ST(6);
-        if (saved_env.fct)
-        arg7 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
       }
     }
     {
@@ -17794,7 +18031,8 @@ XS(_wrap__ReprojectImage) {
     
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    arg9 = (void *)(&saved_env);
     if ((items < 2) || (items > 9)) {
       SWIG_croak("Usage: _ReprojectImage(src_ds,dst_ds,src_wkt,dst_wkt,eResampleAlg,WarpMemoryLimit,maxerror,callback,callback_data);");
     }
@@ -17865,8 +18103,6 @@ XS(_wrap__ReprojectImage) {
         /* %typemap(in) (void* callback_data=NULL) */
         if (SvOK(ST(8)))
         saved_env.data = (SV *)ST(8);
-        if (saved_env.fct)
-        arg9 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
       }
     }
     {
@@ -17944,7 +18180,8 @@ XS(_wrap__ComputeProximity) {
     
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    arg5 = (void *)(&saved_env);
     if ((items < 2) || (items > 5)) {
       SWIG_croak("Usage: _ComputeProximity(srcBand,proximityBand,options,callback,callback_data);");
     }
@@ -17966,7 +18203,9 @@ XS(_wrap__ComputeProximity) {
             if (SvTYPE(SvRV(ST(2)))==SVt_PVAV) {
               AV *av = (AV*)(SvRV(ST(2)));
               for (int i = 0; i < av_len(av)+1; i++) {
-                char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+                SV *sv = *(av_fetch(av, i, 0));
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
+                char *pszItem = SvPV_nolen(sv);
                 arg3 = CSLAddString( arg3, pszItem );
               }
             } else if (SvTYPE(SvRV(ST(2)))==SVt_PVHV) {
@@ -17977,6 +18216,7 @@ XS(_wrap__ComputeProximity) {
               arg3 = NULL;
               hv_iterinit(hv);
               while(sv = hv_iternextsv(hv,&key,&klen)) {
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
                 arg3 = CSLAddNameValue( arg3, key, SvPV_nolen(sv) );
               }
             } else
@@ -18008,8 +18248,6 @@ XS(_wrap__ComputeProximity) {
         /* %typemap(in) (void* callback_data=NULL) */
         if (SvOK(ST(4)))
         saved_env.data = (SV *)ST(4);
-        if (saved_env.fct)
-        arg5 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
       }
     }
     {
@@ -18093,7 +18331,8 @@ XS(_wrap__RasterizeLayer) {
     
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    arg11 = (void *)(&saved_env);
     if ((items < 3) || (items > 9)) {
       SWIG_croak("Usage: _RasterizeLayer(dataset,bands,band_list,layer,pfnTransformer,pTransformArg,burn_values,burn_values_list,options,callback,callback_data);");
     }
@@ -18153,7 +18392,9 @@ XS(_wrap__RasterizeLayer) {
             if (SvTYPE(SvRV(ST(6)))==SVt_PVAV) {
               AV *av = (AV*)(SvRV(ST(6)));
               for (int i = 0; i < av_len(av)+1; i++) {
-                char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+                SV *sv = *(av_fetch(av, i, 0));
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
+                char *pszItem = SvPV_nolen(sv);
                 arg9 = CSLAddString( arg9, pszItem );
               }
             } else if (SvTYPE(SvRV(ST(6)))==SVt_PVHV) {
@@ -18164,6 +18405,7 @@ XS(_wrap__RasterizeLayer) {
               arg9 = NULL;
               hv_iterinit(hv);
               while(sv = hv_iternextsv(hv,&key,&klen)) {
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
                 arg9 = CSLAddNameValue( arg9, key, SvPV_nolen(sv) );
               }
             } else
@@ -18195,8 +18437,6 @@ XS(_wrap__RasterizeLayer) {
         /* %typemap(in) (void* callback_data=NULL) */
         if (SvOK(ST(8)))
         saved_env.data = (SV *)ST(8);
-        if (saved_env.fct)
-        arg11 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
       }
     }
     {
@@ -18302,7 +18542,8 @@ XS(_wrap__Polygonize) {
     
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    arg7 = (void *)(&saved_env);
     if ((items < 4) || (items > 7)) {
       SWIG_croak("Usage: _Polygonize(srcBand,maskBand,outLayer,iPixValField,options,callback,callback_data);");
     }
@@ -18334,7 +18575,9 @@ XS(_wrap__Polygonize) {
             if (SvTYPE(SvRV(ST(4)))==SVt_PVAV) {
               AV *av = (AV*)(SvRV(ST(4)));
               for (int i = 0; i < av_len(av)+1; i++) {
-                char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+                SV *sv = *(av_fetch(av, i, 0));
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
+                char *pszItem = SvPV_nolen(sv);
                 arg5 = CSLAddString( arg5, pszItem );
               }
             } else if (SvTYPE(SvRV(ST(4)))==SVt_PVHV) {
@@ -18345,6 +18588,7 @@ XS(_wrap__Polygonize) {
               arg5 = NULL;
               hv_iterinit(hv);
               while(sv = hv_iternextsv(hv,&key,&klen)) {
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
                 arg5 = CSLAddNameValue( arg5, key, SvPV_nolen(sv) );
               }
             } else
@@ -18376,8 +18620,6 @@ XS(_wrap__Polygonize) {
         /* %typemap(in) (void* callback_data=NULL) */
         if (SvOK(ST(6)))
         saved_env.data = (SV *)ST(6);
-        if (saved_env.fct)
-        arg7 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
       }
     }
     {
@@ -18463,7 +18705,8 @@ XS(_wrap_FillNodata) {
     
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    arg7 = (void *)(&saved_env);
     if ((items < 4) || (items > 7)) {
       SWIG_croak("Usage: FillNodata(targetBand,maskBand,maxSearchDist,smoothingIterations,options,callback,callback_data);");
     }
@@ -18495,7 +18738,9 @@ XS(_wrap_FillNodata) {
             if (SvTYPE(SvRV(ST(4)))==SVt_PVAV) {
               AV *av = (AV*)(SvRV(ST(4)));
               for (int i = 0; i < av_len(av)+1; i++) {
-                char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+                SV *sv = *(av_fetch(av, i, 0));
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
+                char *pszItem = SvPV_nolen(sv);
                 arg5 = CSLAddString( arg5, pszItem );
               }
             } else if (SvTYPE(SvRV(ST(4)))==SVt_PVHV) {
@@ -18506,6 +18751,7 @@ XS(_wrap_FillNodata) {
               arg5 = NULL;
               hv_iterinit(hv);
               while(sv = hv_iternextsv(hv,&key,&klen)) {
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
                 arg5 = CSLAddNameValue( arg5, key, SvPV_nolen(sv) );
               }
             } else
@@ -18537,8 +18783,6 @@ XS(_wrap_FillNodata) {
         /* %typemap(in) (void* callback_data=NULL) */
         if (SvOK(ST(6)))
         saved_env.data = (SV *)ST(6);
-        if (saved_env.fct)
-        arg7 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
       }
     }
     {
@@ -18622,7 +18866,8 @@ XS(_wrap__SieveFilter) {
     
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    arg8 = (void *)(&saved_env);
     if ((items < 4) || (items > 8)) {
       SWIG_croak("Usage: _SieveFilter(srcBand,maskBand,dstBand,threshold,connectedness,options,callback,callback_data);");
     }
@@ -18661,7 +18906,9 @@ XS(_wrap__SieveFilter) {
             if (SvTYPE(SvRV(ST(5)))==SVt_PVAV) {
               AV *av = (AV*)(SvRV(ST(5)));
               for (int i = 0; i < av_len(av)+1; i++) {
-                char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+                SV *sv = *(av_fetch(av, i, 0));
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
+                char *pszItem = SvPV_nolen(sv);
                 arg6 = CSLAddString( arg6, pszItem );
               }
             } else if (SvTYPE(SvRV(ST(5)))==SVt_PVHV) {
@@ -18672,6 +18919,7 @@ XS(_wrap__SieveFilter) {
               arg6 = NULL;
               hv_iterinit(hv);
               while(sv = hv_iternextsv(hv,&key,&klen)) {
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
                 arg6 = CSLAddNameValue( arg6, key, SvPV_nolen(sv) );
               }
             } else
@@ -18703,8 +18951,6 @@ XS(_wrap__SieveFilter) {
         /* %typemap(in) (void* callback_data=NULL) */
         if (SvOK(ST(7)))
         saved_env.data = (SV *)ST(7);
-        if (saved_env.fct)
-        arg8 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
       }
     }
     {
@@ -18789,7 +19035,8 @@ XS(_wrap__RegenerateOverview) {
     
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    arg5 = (void *)(&saved_env);
     if ((items < 2) || (items > 5)) {
       SWIG_croak("Usage: _RegenerateOverview(srcBand,overviewBand,resampling,callback,callback_data);");
     }
@@ -18832,8 +19079,6 @@ XS(_wrap__RegenerateOverview) {
         /* %typemap(in) (void* callback_data=NULL) */
         if (SvOK(ST(4)))
         saved_env.data = (SV *)ST(4);
-        if (saved_env.fct)
-        arg5 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
       }
     }
     {
@@ -18922,7 +19167,8 @@ XS(_wrap_ContourGenerate) {
     
     SavedEnv saved_env;
     saved_env.fct = NULL;
-    saved_env.data = NULL;
+    saved_env.data = &PL_sv_undef;
+    arg12 = (void *)(&saved_env);
     if ((items < 9) || (items > 11)) {
       SWIG_croak("Usage: ContourGenerate(srcBand,contourInterval,contourBase,fixedLevelCount,fixedLevels,useNoData,noDataValue,dstLayer,idField,elevField,callback,callback_data);");
     }
@@ -19000,8 +19246,6 @@ XS(_wrap_ContourGenerate) {
         /* %typemap(in) (void* callback_data=NULL) */
         if (SvOK(ST(10)))
         saved_env.data = (SV *)ST(10);
-        if (saved_env.fct)
-        arg12 = (void *)(&saved_env); /* the Perl layer must make sure that this parameter is always given */
       }
     }
     {
@@ -19213,7 +19457,9 @@ XS(_wrap_new_Transformer) {
           if (SvTYPE(SvRV(ST(2)))==SVt_PVAV) {
             AV *av = (AV*)(SvRV(ST(2)));
             for (int i = 0; i < av_len(av)+1; i++) {
-              char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+              SV *sv = *(av_fetch(av, i, 0));
+              sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
+              char *pszItem = SvPV_nolen(sv);
               arg3 = CSLAddString( arg3, pszItem );
             }
           } else if (SvTYPE(SvRV(ST(2)))==SVt_PVHV) {
@@ -19224,6 +19470,7 @@ XS(_wrap_new_Transformer) {
             arg3 = NULL;
             hv_iterinit(hv);
             while(sv = hv_iternextsv(hv,&key,&klen)) {
+              sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
               arg3 = CSLAddNameValue( arg3, key, SvPV_nolen(sv) );
             }
           } else
@@ -19393,8 +19640,16 @@ XS(_wrap_Transformer_TransformPoint__SWIG_0) {
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
     {
       /* %typemap(argout) (double argout[ANY]) */
-      ST(argvi) = CreateArrayFromDoubleArray( arg3, 3 );
-      argvi++;
+      if (GIMME_V == G_ARRAY) {
+        /* return a list */
+        int i;
+        EXTEND(SP, argvi+3-items+1);
+        for (i = 0; i < 3; i++)
+        ST(argvi++) = sv_2mortal(newSVnv(arg3[i]));
+      } else {
+        ST(argvi) = CreateArrayFromDoubleArray( arg3, 3 );
+        argvi++;
+      }  
     }
     
     
@@ -19493,8 +19748,16 @@ XS(_wrap_Transformer_TransformPoint__SWIG_1) {
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
     {
       /* %typemap(argout) (double argout[ANY]) */
-      ST(argvi) = CreateArrayFromDoubleArray( arg2, 3 );
-      argvi++;
+      if (GIMME_V == G_ARRAY) {
+        /* return a list */
+        int i;
+        EXTEND(SP, argvi+3-items+1);
+        for (i = 0; i < 3; i++)
+        ST(argvi++) = sv_2mortal(newSVnv(arg2[i]));
+      } else {
+        ST(argvi) = CreateArrayFromDoubleArray( arg2, 3 );
+        argvi++;
+      }  
     }
     
     
@@ -19929,8 +20192,16 @@ XS(_wrap_InvGeoTransform) {
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
     {
       /* %typemap(argout) (double argout[ANY]) */
-      ST(argvi) = CreateArrayFromDoubleArray( arg2, 6 );
-      argvi++;
+      if (GIMME_V == G_ARRAY) {
+        /* return a list */
+        int i;
+        EXTEND(SP, argvi+6-items+1);
+        for (i = 0; i < 6; i++)
+        ST(argvi++) = sv_2mortal(newSVnv(arg2[i]));
+      } else {
+        ST(argvi) = CreateArrayFromDoubleArray( arg2, 6 );
+        argvi++;
+      }  
     }
     
     
@@ -19992,7 +20263,13 @@ XS(_wrap_VersionInfo) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     XSRETURN(argvi);
   fail:
@@ -20357,7 +20634,13 @@ XS(_wrap_GetDataTypeName) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     XSRETURN(argvi);
   fail:
@@ -20460,7 +20743,13 @@ XS(_wrap_GetColorInterpretationName) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     XSRETURN(argvi);
   fail:
@@ -20511,7 +20800,13 @@ XS(_wrap_GetPaletteInterpretationName) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     XSRETURN(argvi);
   fail:
@@ -20581,7 +20876,13 @@ XS(_wrap_DecToDMS) {
       
       
     }
-    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
+    {
+      /* %typemap(out) const char * */
+      ST(argvi) = newSVpv(result, 0);
+      SvUTF8_on(ST(argvi)); /* expecting GDAL to give us UTF-8 */
+      sv_2mortal(ST(argvi));
+      argvi++;
+    }
     
     if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
     
@@ -20980,9 +21281,6 @@ XS(_wrap__Open__SWIG_1) {
   {
     char *arg1 = (char *) 0 ;
     GDALAccess arg2 = (GDALAccess) GA_ReadOnly ;
-    int res1 ;
-    char *buf1 = 0 ;
-    int alloc1 = 0 ;
     int val2 ;
     int ecode2 = 0 ;
     int argvi = 0;
@@ -20992,11 +21290,11 @@ XS(_wrap__Open__SWIG_1) {
     if ((items < 1) || (items > 2)) {
       SWIG_croak("Usage: _Open(utf8_path,eAccess);");
     }
-    res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "_Open" "', argument " "1"" of type '" "char const *""'");
+    {
+      /* %typemap(in,numinputs=1) (const char* utf8_path) */
+      sv_utf8_upgrade(ST(0));
+      arg1 = SvPV_nolen(ST(0));
     }
-    arg1 = reinterpret_cast< char * >(buf1);
     if (items > 1) {
       ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
       if (!SWIG_IsOK(ecode2)) {
@@ -21034,11 +21332,9 @@ XS(_wrap__Open__SWIG_1) {
       
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     
     XSRETURN(argvi);
   fail:
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     
     SWIG_croak_null();
   }
@@ -21099,9 +21395,6 @@ XS(_wrap__OpenShared__SWIG_1) {
   {
     char *arg1 = (char *) 0 ;
     GDALAccess arg2 = (GDALAccess) GA_ReadOnly ;
-    int res1 ;
-    char *buf1 = 0 ;
-    int alloc1 = 0 ;
     int val2 ;
     int ecode2 = 0 ;
     int argvi = 0;
@@ -21111,11 +21404,11 @@ XS(_wrap__OpenShared__SWIG_1) {
     if ((items < 1) || (items > 2)) {
       SWIG_croak("Usage: _OpenShared(utf8_path,eAccess);");
     }
-    res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "_OpenShared" "', argument " "1"" of type '" "char const *""'");
+    {
+      /* %typemap(in,numinputs=1) (const char* utf8_path) */
+      sv_utf8_upgrade(ST(0));
+      arg1 = SvPV_nolen(ST(0));
     }
-    arg1 = reinterpret_cast< char * >(buf1);
     if (items > 1) {
       ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
       if (!SWIG_IsOK(ecode2)) {
@@ -21153,11 +21446,9 @@ XS(_wrap__OpenShared__SWIG_1) {
       
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDatasetShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     
     XSRETURN(argvi);
   fail:
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     
     SWIG_croak_null();
   }
@@ -21218,9 +21509,6 @@ XS(_wrap_IdentifyDriver) {
   {
     char *arg1 = (char *) 0 ;
     char **arg2 = (char **) NULL ;
-    int res1 ;
-    char *buf1 = 0 ;
-    int alloc1 = 0 ;
     int argvi = 0;
     GDALDriverShadow *result = 0 ;
     dXSARGS;
@@ -21228,11 +21516,11 @@ XS(_wrap_IdentifyDriver) {
     if ((items < 1) || (items > 2)) {
       SWIG_croak("Usage: IdentifyDriver(utf8_path,papszSiblings);");
     }
-    res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "IdentifyDriver" "', argument " "1"" of type '" "char const *""'");
+    {
+      /* %typemap(in,numinputs=1) (const char* utf8_path) */
+      sv_utf8_upgrade(ST(0));
+      arg1 = SvPV_nolen(ST(0));
     }
-    arg1 = reinterpret_cast< char * >(buf1);
     if (items > 1) {
       {
         /* %typemap(in) char **options */
@@ -21241,7 +21529,9 @@ XS(_wrap_IdentifyDriver) {
             if (SvTYPE(SvRV(ST(1)))==SVt_PVAV) {
               AV *av = (AV*)(SvRV(ST(1)));
               for (int i = 0; i < av_len(av)+1; i++) {
-                char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+                SV *sv = *(av_fetch(av, i, 0));
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
+                char *pszItem = SvPV_nolen(sv);
                 arg2 = CSLAddString( arg2, pszItem );
               }
             } else if (SvTYPE(SvRV(ST(1)))==SVt_PVHV) {
@@ -21252,6 +21542,7 @@ XS(_wrap_IdentifyDriver) {
               arg2 = NULL;
               hv_iterinit(hv);
               while(sv = hv_iternextsv(hv,&key,&klen)) {
+                sv_utf8_upgrade(sv); /* GDAL expects UTF-8 */
                 arg2 = CSLAddNameValue( arg2, key, SvPV_nolen(sv) );
               }
             } else
@@ -21291,14 +21582,12 @@ XS(_wrap_IdentifyDriver) {
       
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALDriverShadow, 0 | SWIG_SHADOW); argvi++ ;
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     {
       /* %typemap(freearg) char **options */
       if (arg2) CSLDestroy( arg2 );
     }
     XSRETURN(argvi);
   fail:
-    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     {
       /* %typemap(freearg) char **options */
       if (arg2) CSLDestroy( arg2 );
@@ -21335,7 +21624,6 @@ static swig_type_info _swigt__p_GDALRasterBandShadow = {"_p_GDALRasterBandShadow
 static swig_type_info _swigt__p_GDALTransformerInfoShadow = {"_p_GDALTransformerInfoShadow", "GDALTransformerInfoShadow *", 0, 0, (void*)"Geo::GDAL::Transformer", 0};
 static swig_type_info _swigt__p_GDAL_GCP = {"_p_GDAL_GCP", "GDAL_GCP *", 0, 0, (void*)"Geo::GDAL::GCP", 0};
 static swig_type_info _swigt__p_OGRLayerShadow = {"_p_OGRLayerShadow", "OGRLayerShadow *", 0, 0, (void*)"Geo::OGR::Layer", 0};
-static swig_type_info _swigt__p_SavedEnv = {"_p_SavedEnv", "SavedEnv *", 0, 0, (void*)"Geo::GDAL::SavedEnv", 0};
 static swig_type_info _swigt__p_VSIStatBufL = {"_p_VSIStatBufL", "VSIStatBufL *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *|retStringAndCPLFree *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_double = {"_p_double", "double *", 0, 0, (void*)0, 0};
@@ -21362,7 +21650,6 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_GDALTransformerInfoShadow,
   &_swigt__p_GDAL_GCP,
   &_swigt__p_OGRLayerShadow,
-  &_swigt__p_SavedEnv,
   &_swigt__p_VSIStatBufL,
   &_swigt__p_char,
   &_swigt__p_double,
@@ -21389,7 +21676,6 @@ static swig_cast_info _swigc__p_GDALRasterBandShadow[] = {  {&_swigt__p_GDALRast
 static swig_cast_info _swigc__p_GDALTransformerInfoShadow[] = {  {&_swigt__p_GDALTransformerInfoShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDAL_GCP[] = {  {&_swigt__p_GDAL_GCP, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRLayerShadow[] = {  {&_swigt__p_OGRLayerShadow, 0, 0, 0},{0, 0, 0, 0}};
-static swig_cast_info _swigc__p_SavedEnv[] = {  {&_swigt__p_SavedEnv, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VSIStatBufL[] = {  {&_swigt__p_VSIStatBufL, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_double[] = {  {&_swigt__p_double, 0, 0, 0},{0, 0, 0, 0}};
@@ -21416,7 +21702,6 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_GDALTransformerInfoShadow,
   _swigc__p_GDAL_GCP,
   _swigc__p_OGRLayerShadow,
-  _swigc__p_SavedEnv,
   _swigc__p_VSIStatBufL,
   _swigc__p_char,
   _swigc__p_double,
@@ -21441,12 +21726,6 @@ static swig_variable_info swig_variables[] = {
 {0,0,0,0}
 };
 static swig_command_info swig_commands[] = {
-{"Geo::GDALc::SavedEnv_fct_set", _wrap_SavedEnv_fct_set},
-{"Geo::GDALc::SavedEnv_fct_get", _wrap_SavedEnv_fct_get},
-{"Geo::GDALc::SavedEnv_data_set", _wrap_SavedEnv_data_set},
-{"Geo::GDALc::SavedEnv_data_get", _wrap_SavedEnv_data_get},
-{"Geo::GDALc::new_SavedEnv", _wrap_new_SavedEnv},
-{"Geo::GDALc::delete_SavedEnv", _wrap_delete_SavedEnv},
 {"Geo::GDALc::callback_d_cp_vp", _wrap_callback_d_cp_vp},
 {"Geo::GDALc::UseExceptions", _wrap_UseExceptions},
 {"Geo::GDALc::DontUseExceptions", _wrap_DontUseExceptions},
@@ -21462,8 +21741,8 @@ static swig_command_info swig_commands[] = {
 {"Geo::GDALc::PushFinderLocation", _wrap_PushFinderLocation},
 {"Geo::GDALc::PopFinderLocation", _wrap_PopFinderLocation},
 {"Geo::GDALc::FinderClean", _wrap_FinderClean},
-{"Geo::GDALc::_FindFile", _wrap__FindFile},
-{"Geo::GDALc::_ReadDir", _wrap__ReadDir},
+{"Geo::GDALc::FindFile", _wrap_FindFile},
+{"Geo::GDALc::ReadDir", _wrap_ReadDir},
 {"Geo::GDALc::SetConfigOption", _wrap_SetConfigOption},
 {"Geo::GDALc::GetConfigOption", _wrap_GetConfigOption},
 {"Geo::GDALc::CPLBinaryToHex", _wrap_CPLBinaryToHex},
@@ -21479,7 +21758,9 @@ static swig_command_info swig_commands[] = {
 {"Geo::GDALc::VSIFCloseL", _wrap_VSIFCloseL},
 {"Geo::GDALc::VSIFSeekL", _wrap_VSIFSeekL},
 {"Geo::GDALc::VSIFTellL", _wrap_VSIFTellL},
+{"Geo::GDALc::VSIFTruncateL", _wrap_VSIFTruncateL},
 {"Geo::GDALc::VSIFWriteL", _wrap_VSIFWriteL},
+{"Geo::GDALc::VSIFReadL", _wrap_VSIFReadL},
 {"Geo::GDALc::MajorObject_GetDescription", _wrap_MajorObject_GetDescription},
 {"Geo::GDALc::MajorObject_SetDescription", _wrap_MajorObject_SetDescription},
 {"Geo::GDALc::MajorObject_GetMetadata", _wrap_MajorObject_GetMetadata},
@@ -21613,6 +21894,8 @@ static swig_command_info swig_commands[] = {
 {"Geo::GDALc::Band_GetDefaultHistogram", _wrap_Band_GetDefaultHistogram},
 {"Geo::GDALc::Band_SetDefaultHistogram", _wrap_Band_SetDefaultHistogram},
 {"Geo::GDALc::Band_HasArbitraryOverviews", _wrap_Band_HasArbitraryOverviews},
+{"Geo::GDALc::Band_GetCategoryNames", _wrap_Band_GetCategoryNames},
+{"Geo::GDALc::Band_SetCategoryNames", _wrap_Band_SetCategoryNames},
 {"Geo::GDALc::Band_ContourGenerate", _wrap_Band_ContourGenerate},
 {"Geo::GDALc::new_ColorTable", _wrap_new_ColorTable},
 {"Geo::GDALc::delete_ColorTable", _wrap_delete_ColorTable},
@@ -21985,7 +22268,6 @@ XS(SWIG_init) {
     GDALAllRegister();
   }
   
-  SWIG_TypeClientData(SWIGTYPE_p_SavedEnv, (void*) "Geo::GDAL::SavedEnv");
   SWIG_TypeClientData(SWIGTYPE_p_GDALMajorObjectShadow, (void*) "Geo::GDAL::MajorObject");
   SWIG_TypeClientData(SWIGTYPE_p_GDALDriverShadow, (void*) "Geo::GDAL::Driver");
   SWIG_TypeClientData(SWIGTYPE_p_GDAL_GCP, (void*) "Geo::GDAL::GCP");

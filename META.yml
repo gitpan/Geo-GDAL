@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Geo-GDAL
-version:            1.81
+version:            1.90
 abstract:           ~
 author:  []
 license:            unknown

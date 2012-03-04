@@ -66,8 +66,8 @@ package Geo::GDAL;
 *PushFinderLocation = *Geo::GDALc::PushFinderLocation;
 *PopFinderLocation = *Geo::GDALc::PopFinderLocation;
 *FinderClean = *Geo::GDALc::FinderClean;
-*_FindFile = *Geo::GDALc::_FindFile;
-*_ReadDir = *Geo::GDALc::_ReadDir;
+*FindFile = *Geo::GDALc::FindFile;
+*ReadDir = *Geo::GDALc::ReadDir;
 *SetConfigOption = *Geo::GDALc::SetConfigOption;
 *GetConfigOption = *Geo::GDALc::GetConfigOption;
 *CPLBinaryToHex = *Geo::GDALc::CPLBinaryToHex;
@@ -83,7 +83,9 @@ package Geo::GDAL;
 *VSIFCloseL = *Geo::GDALc::VSIFCloseL;
 *VSIFSeekL = *Geo::GDALc::VSIFSeekL;
 *VSIFTellL = *Geo::GDALc::VSIFTellL;
+*VSIFTruncateL = *Geo::GDALc::VSIFTruncateL;
 *VSIFWriteL = *Geo::GDALc::VSIFWriteL;
+*VSIFReadL = *Geo::GDALc::VSIFReadL;
 *GDAL_GCP_GCPX_get = *Geo::GDALc::GDAL_GCP_GCPX_get;
 *GDAL_GCP_GCPX_set = *Geo::GDALc::GDAL_GCP_GCPX_set;
 *GDAL_GCP_GCPY_get = *Geo::GDALc::GDAL_GCP_GCPY_get;
@@ -150,47 +152,6 @@ package Geo::GDAL;
 *_Open = *Geo::GDALc::_Open;
 *_OpenShared = *Geo::GDALc::_OpenShared;
 *IdentifyDriver = *Geo::GDALc::IdentifyDriver;
-
-############# Class : Geo::GDAL::SavedEnv ##############
-
-package Geo::GDAL::SavedEnv;
-use vars qw(@ISA %OWNER %ITERATORS %BLESSEDMEMBERS);
-@ISA = qw( Geo::GDAL );
-%OWNER = ();
-%ITERATORS = ();
-*swig_fct_get = *Geo::GDALc::SavedEnv_fct_get;
-*swig_fct_set = *Geo::GDALc::SavedEnv_fct_set;
-*swig_data_get = *Geo::GDALc::SavedEnv_data_get;
-*swig_data_set = *Geo::GDALc::SavedEnv_data_set;
-sub new {
-    my $pkg = shift;
-    my $self = Geo::GDALc::new_SavedEnv(@_);
-    bless $self, $pkg if defined($self);
-}
-
-sub DESTROY {
-    return unless $_[0]->isa('HASH');
-    my $self = tied(%{$_[0]});
-    return unless defined $self;
-    delete $ITERATORS{$self};
-    if (exists $OWNER{$self}) {
-        Geo::GDALc::delete_SavedEnv($self);
-        delete $OWNER{$self};
-    }
-}
-
-sub DISOWN {
-    my $self = shift;
-    my $ptr = tied(%$self);
-    delete $OWNER{$ptr};
-}
-
-sub ACQUIRE {
-    my $self = shift;
-    my $ptr = tied(%$self);
-    $OWNER{$ptr} = 1;
-}
-
 
 ############# Class : Geo::GDAL::MajorObject ##############
 
@@ -458,6 +419,8 @@ use vars qw(@ISA %OWNER %ITERATORS %BLESSEDMEMBERS);
 *GetDefaultHistogram = *Geo::GDALc::Band_GetDefaultHistogram;
 *SetDefaultHistogram = *Geo::GDALc::Band_SetDefaultHistogram;
 *HasArbitraryOverviews = *Geo::GDALc::Band_HasArbitraryOverviews;
+*GetCategoryNames = *Geo::GDALc::Band_GetCategoryNames;
+*SetCategoryNames = *Geo::GDALc::Band_SetCategoryNames;
 *ContourGenerate = *Geo::GDALc::Band_ContourGenerate;
 sub DISOWN {
     my $self = shift;
@@ -636,8 +599,8 @@ package Geo::GDAL;
     # version should match. GDAL version is available in runtime but
     # it is needed here for the build time when it is compared against
     # the version of GDAL against which we build.
-    our $VERSION = '1.81';
-    our $GDAL_VERSION = '1.8.1';
+    our $VERSION = '1.90';
+    our $GDAL_VERSION = '1.9.0';
     use vars qw/
 	%TYPE_STRING2INT %TYPE_INT2STRING
 	%ACCESS_STRING2INT %ACCESS_INT2STRING
@@ -786,19 +749,6 @@ package Geo::GDAL;
     sub AutoCreateWarpedVRT {
 	$_[3] = $RESAMPLING_STRING2INT{$_[3]} if $_[3] and exists $RESAMPLING_STRING2INT{$_[3]};
 	return _AutoCreateWarpedVRT(@_);
-    }
-    sub FindFile {
-	my $a = _FindFile(@_);
-	$a = decode('utf8', $a); # GDAL returns utf8
-	return $a;
-    }
-    sub ReadDir {
-	return unless defined wantarray;
-	my $a = _ReadDir(@_);
-	for (@$a) {
-	    $_ = decode('utf8', $_); # GDAL returns utf8
-	}
-	return wantarray ? @$a : $a;
     }
 
     package Geo::GDAL::MajorObject;
@@ -963,10 +913,12 @@ package Geo::GDAL;
     use UNIVERSAL qw(isa);
     use strict;
     use vars qw/
+        @COLOR_INTERPRETATIONS
 	%COLOR_INTERPRETATION_STRING2INT %COLOR_INTERPRETATION_INT2STRING @DOMAINS
 	/;
-    for my $string (qw/Undefined GrayIndex PaletteIndex RedBand GreenBand BlueBand AlphaBand 
-		    HueBand SaturationBand LightnessBand CyanBand MagentaBand YellowBand BlackBand/) {
+    @COLOR_INTERPRETATIONS = qw/Undefined GrayIndex PaletteIndex RedBand GreenBand BlueBand AlphaBand 
+		    HueBand SaturationBand LightnessBand CyanBand MagentaBand YellowBand BlackBand/;
+    for my $string (@COLOR_INTERPRETATIONS) {
 	my $int = eval "\$Geo::GDAL::Constc::GCI_$string";
 	$COLOR_INTERPRETATION_STRING2INT{$string} = $int;
 	$COLOR_INTERPRETATION_INT2STRING{$int} = $string;
@@ -1006,6 +958,17 @@ package Geo::GDAL;
 	my $self = shift;
 	SetNoDataValue($self, $_[0]) if @_ > 0;
 	GetNoDataValue($self);
+    }
+    sub Unit {
+	my $self = shift;
+	SetUnitType($self, $_[0]) if @_ > 0;
+	GetUnitType($self);
+    }
+    sub ScaleAndOffset {
+	my $self = shift;
+	SetScale($self, $_[0]) if @_ > 0;
+	SetOffset($self, $_[1]) if @_ > 1;
+	(GetScale($self), GetOffset($self));
     }
     sub ReadTile {
 	my($self, $xoff, $yoff, $xsize, $ysize) = @_;
@@ -1089,10 +1052,9 @@ package Geo::GDAL;
 	    $params{$_} = $defaults{$_} unless defined $params{$_};
 	}
 	$params{ProgressData} = 1 if $params{Progress} and not defined $params{ProgressData};
-	my $h = _GetHistogram($self, $params{Min}, $params{Max}, $params{Buckets},
-			      $params{IncludeOutOfRange}, $params{ApproxOK},
-			      $params{Progress}, $params{ProgressData});
-	return @$h if $h;
+	_GetHistogram($self, $params{Min}, $params{Max}, $params{Buckets},
+		      $params{IncludeOutOfRange}, $params{ApproxOK},
+		      $params{Progress}, $params{ProgressData});
     }
     sub Contours {
 	my $self = shift;
@@ -1144,6 +1106,7 @@ package Geo::GDAL;
       $_[6] = undef unless defined $_[6];
       Geo::GDAL::FillNodata(@_);
     }
+    *GetBandNumber = *GetBand;
 
     package Geo::GDAL::ColorTable;
     use strict;
@@ -1258,6 +1221,13 @@ package Geo::GDAL;
 	SetValueAsString($self, $row, $column, $_[3]) if defined $_[3];
 	return unless defined wantarray;
 	GetValueAsString($self, $row, $column);
+    }
+    sub LinearBinning {
+	my $self = shift;
+	SetLinearBinning($self, @_) if @_ > 0;
+	return unless defined wantarray;
+	my @a = GetLinearBinning($self);
+	return $a[0] ? ($a[1], $a[2]) : ();
     }
 
  1;

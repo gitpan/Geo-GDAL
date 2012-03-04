@@ -14,9 +14,6 @@ from GDAL sources.
 
 This module is _not_ compatible with Geo::GDAL 0.11
 
-Starting from version 1.81 the module version reflects the GDAL version
-number.
-
 INSTALLATION
 
 This module can be built and installed as a part of gdal build and
