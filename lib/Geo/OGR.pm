@@ -692,7 +692,7 @@ package Geo::OGR;
 
     use strict;
     use Carp;
-    our $VERSION = $Geo::GDAL::VERSION;
+    our $VERSION = '1.992';
     {
         package Geo::OGR;
     }
