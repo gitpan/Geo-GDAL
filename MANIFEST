@@ -26,3 +26,4 @@ rv.dox
 transform.dox
 check_dox.pl
 META.yml                                 Module meta-data (added by MakeMaker)
+META.json                                Module JSON meta-data (added by MakeMaker)
