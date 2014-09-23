@@ -248,17 +248,18 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 	$h->{Geometry} = $h->{Geometry}->AsText;
 	if ($i == 0) {
 	    my @t = (0,'POINT (1 2)',13,undef,undef);
-	    ok(is_deeply(\@a, \@t), "layer create test 1");
+	    ok(is_deeply(\@a, \@t), "layer create test 1: got @a, expected: @t");
 	} else {
 	    my %t = (FID => 1, Geometry => 'POINT (3 2)', test1 => undef, test2 => '31a', test3 => undef);
-	    ok(is_deeply($h, \%t), "layer create test 2");
+            my @v = values(%t);
+	    ok(is_deeply($h, \%t), "layer create test 2: @v");
 	}
 	$i++;
     }
     $layer->Row(FID=>0, Geometry=>{ Points => [5,6] }, test3 => 6.5);
     my @t = $layer->Tuple(0);
-    ok($t[4] == 6.5, "layer row and tuple");
-    ok($t[1]->ExportToWkt eq 'POINT (5 6)', "layer row and tuple");
+    ok($t[4] == 6.5, "layer row and tuple(1/2): @t");
+    ok($t[1]->ExportToWkt eq 'POINT (5 6)', "layer row and tuple(2/2): @t");
 }
 
 my $osr = new Geo::OSR::SpatialReference;
